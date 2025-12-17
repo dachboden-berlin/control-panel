@@ -2,10 +2,19 @@ from controlpanel.shared.base import BaseSensor
 from typing import Hashable
 from abc import abstractmethod
 from controlpanel import api
+from artnet import ArtNet
 
 
 class Sensor(BaseSensor):
     EVENT_TYPES: dict[str, Hashable] = dict()
+
+    def __init__(self, _artnet: ArtNet, name: str):
+        super().__init__(_artnet, name)
+        self._muted: bool = False
+
+    @property
+    def muted(self) -> bool:
+        return self._muted
 
     @property
     @abstractmethod

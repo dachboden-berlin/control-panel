@@ -276,6 +276,8 @@ class EventManager:
             return
         sensor._seq = seq
 
+        if sensor.muted:
+            return
         sensor.parse_trigger_payload(sensor_data, ts)
 
     def _parse_dmx(self, reply: dict[str, Any], sender: tuple[str, int], ts: float) -> None:
