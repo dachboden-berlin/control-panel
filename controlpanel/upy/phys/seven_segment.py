@@ -12,8 +12,8 @@ class SevenSegmentDisplay(Fixture):
     def __init__(self,
                  _context: tuple[ArtNet, SoftSPI, I2C],
                  _name: str,
-                 digit_count: int,
                  pin_chip_select: int,
+                 digit_count: int,
                  *,
                  update_rate_hz: float = _DEFAULT_UPDATE_RATE_HZ,
                  universe: int | None = None
@@ -22,6 +22,6 @@ class SevenSegmentDisplay(Fixture):
         self._display = SevenSegment(_context[1], digit_count, cs=pin_chip_select, reverse=True)
 
     def parse_dmx_data(self, data: bytes) -> None:
-        brightness: int = data[0] // 16
+        brightness: int = data[0]
         self._display.text(data[1:].decode("ascii"))
         self._display.brightness(brightness)
