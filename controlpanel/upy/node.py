@@ -72,8 +72,12 @@ class Node:
         devices: dict[str, Device] = {}
         for device_name, (class_name, kwargs, _) in device_config.items():
             cls: type = getattr(phys, class_name)
-            device: Device = cls((self._artnet, self._spi, self._i2c), device_name, **kwargs)
-            devices[device.name] = device
+            try:
+                device: Device = cls((self._artnet, self._spi, self._i2c), device_name, **kwargs)
+                devices[device.name] = device
+            except Exception as e:
+                print(f"Failed to instantiate device '{device_name}', logging...")
+                utils.log_error(e)
         return devices
 
     def _stop_updating_devices(self):

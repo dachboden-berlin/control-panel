@@ -1,5 +1,6 @@
 import network
 import machine
+import sys
 
 
 FALLBACK_AP_PASSWORD = "micropython"
@@ -7,6 +8,17 @@ CREDENTIALS = "credentials.json"
 HOSTNAME_MANIFEST = "hostname_manifest.json"
 MAC_ADDRESS: str | None = None
 LOCAL_IP: str | None = None
+
+
+def log_error(error):
+    with open("log.txt", "a") as log:
+        sys.print_exception(error, log)
+
+
+def print_log():
+    with open("log.txt", "r") as log:
+        for line in log.readlines():
+            print(line)
 
 
 def get_mac_address() -> str:
