@@ -81,9 +81,9 @@
   "waehlscheibe":
   {
     "spi": {
-      "mosi": 4,
-      "miso": null,
-      "sck": 22
+      "mosi": 13,
+      "miso": 20,
+      "sck": 14
     },
     "i2c": null,
     "devices": {
@@ -91,7 +91,8 @@
       "PowerSwitch": ["Button", {"pin": 32}, {}],
       "DialReset": ["Button", {"pin": 5}, {}],
       "TestHebel": ["Button", {"pin": 16}, {}],
-      "StatusLED": ["LEDStrip", {"pin": 33, "length": 1}, {}]
+      "StatusLED": ["LEDStrip", {"pin": 33, "length": 1}, {}],
+      "SevenSegmentDisplay": ["SevenSegmentDisplay", {"pin_chip_select": 19, "digit_count": 16}, {}]
     }
   },
   "broken_stuff": {
@@ -99,7 +100,6 @@
     "i2c": null,
     "devices": {
       "RedYellowLEDs": ["SipoShiftRegister", {"count": 1, "latch": 21}, {}],
-      "SevenSegmentDisplay": ["SevenSegmentDisplay", {"pin": 19, "digit_count": 16}, {}],
       "BVGPanel": ["SipoShiftRegister", {"count": 8, "pin_clock": 19, "pin_latch": 21, "pin_serialout": 4}, {}]
     }
   }
