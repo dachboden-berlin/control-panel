@@ -22,7 +22,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "micropython-esp32-stubs==1.25.0.*"
+    "micropython-esp32-stubs==1.25.0.*",
+    "pathspec",
 ]
 
 [project.scripts]
