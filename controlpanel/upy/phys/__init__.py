@@ -5,6 +5,7 @@ from .adc import ADC
 from .banana_plugs import BananaPlugs
 from .button import Button
 from .composite_pwm import CompositePWM
+from .fourteensegment import FourteenSegmentDisplay
 from .led_strip import LEDStrip
 from .pwm import PWM
 from .rotary_dial import RotaryDial

@@ -5,6 +5,7 @@ from .adc import ADC
 from .button import Button
 from .banana_plugs import BananaPlugs
 from .composite_pwm import CompositePWM
+from .fourteensegment import FourteenSegmentDisplay
 from .led_strip import LEDStrip
 from .pwm import PWM
 from .rfid_reader import RFIDReader

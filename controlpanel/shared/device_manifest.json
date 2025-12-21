@@ -95,6 +95,31 @@
       "SevenSegmentDisplay": ["SevenSegmentDisplay", {"pin_chip_select": 19, "digit_count": 16}, {}]
     }
   },
+  "test":
+  {
+    "spi": null,
+    "i2c": null,
+    "devices": {
+      "Hall": ["ADC", {"pin": 32}, {}]
+    }
+  },
+  "fourteensegment":
+  {
+    "spi": null,
+    "i2c": null,
+    "devices": {
+      "fourteensegment": ["FourteenSegmentDisplay", {"pin": 12, "element_count": 2}, {}]
+    }
+  },
+  "battery":
+  {
+    "spi": null,
+    "i2c": null,
+    "devices": {
+      "_BatterieSpannung": ["ADC", {"pin": 32}, {}],
+      "BatteriePWM": ["PWM", {"pin": 33}, {}]
+    }
+  },
   "broken_stuff": {
     "spi": null,
     "i2c": null,
