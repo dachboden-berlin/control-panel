@@ -2,10 +2,10 @@
 This module describes the properties and behaviors of DMX Devices,
 and are modeled after real-life devices.
 """
-
 from .dmx import DMXDevice, DMXUniverse
 import numpy as np
-from typing import Callable
+from enum import Enum
+import math
 
 
 TimeType = float
@@ -226,6 +226,125 @@ class MovingHead(DMXDevice):
         dmx.set_float(self.chan_no, 12, self._pan_fine)
         dmx.set_float(self.chan_no, 13, self._tilt_fine)
         dmx.set_float(self.chan_no, 14, self._reset)
+
+
+class HydroBeamX12(DMXDevice):
+    """
+    Moving head.
+    Modeled after the Hydro Beam X12 moving head
+    User manual: https://www.adj.com/cdn/shop/files/ADJ_HYDRO_BEAM_X12_-_USER_MANUAL.pdf?v=11308301875406801713
+
+    Pan:
+    0.0 is pointing right   | phi = 3pi/2
+    0.166 is pointing back  | phi = pi
+    0.333 is pointing left  | phi = pi/2
+    0.5 is pointing forward | phi = 0
+    0.666 is poing right    | phi = -pi/2
+    0.833 is pointing back  | phi = -pi
+    1.0 is pointling left   | phi = -3pi/2
+
+    Tilt:
+    0.166 is pointing forward
+    0.50 is fully up
+    0.833 is pointing back
+    """
+
+    class COLOR(Enum):
+        WHITE = 0
+        RED = 4
+        ORANGE = 8
+        AQUAMARINE = 12
+        GREEN = 16
+        LIGHT_GREEN = 20
+        LAVENDER = 24
+        PINK = 28
+        LIGHT_YELLOW = 32
+        MAGENTA = 36
+        CYAN = 40
+        YELLOW = 44
+        WHITE_WARM = 48
+        WHITE_COOL = 52
+        UV = 56
+
+    def __init__(self, name: str, chan_no: int):
+        super().__init__(name, chan_no, num_chans=18)
+        self._pan: int = 255//2
+        self._pan_fine: int = 255//2
+        self._tilt: float = 255//2
+        self._tilt_fine: float = 255//2
+        self._color_wheel: int = 0
+        self._static_gobo: int = 0
+        self._prism1: int = 0
+        self._prism1_rot: int = 0
+        self._prism2: int = 0
+        self._prism2_rot: int = 0
+        self._strobe: int = 32
+        self._dimmer: float = 1.0
+        self._dimmer_fine: float = 0.0
+        self._focus: float = 0.0
+        self._focus_fine: float = 0.0
+        self._frost: int = 0
+        self._pan_tilt_speed: float = 0.0
+        self._special_function: int = 0
+
+    @staticmethod
+    def _phi_to_pan(phi: float) -> float:
+        return 1 / (3 * math.pi) * phi + 0.5  # (DeltaY-DeltaX)*x+b = mx+b
+
+    @staticmethod
+    def _theta_to_tilt(theta: float) -> float:
+        return (-4/6) / math.pi * theta + 0.5  # (DeltaY-DeltaX)*x+b = mx+b
+
+    @staticmethod
+    def _encode_float_to_bytes(x) -> tuple[int, int]:
+        assert 0.0 <= x <= 1.0
+        n = int(round(x * 65535))
+        return (n >> 8) & 0xFF, n & 0xFF
+
+    def set_color(self, color: COLOR | int) -> None:
+        self._color_wheel = color
+
+    def set_intensity(self, intensity: float) -> None:
+        intensity = min(1.0, max(0.0, intensity))
+        self._dimmer, self._dimmer_fine = self._encode_float_to_bytes(intensity)
+
+    def set_focus(self, focus: float) -> None:
+        focus = min(1.0, max(0.0, focus))
+        self._focus, self._focus_fine = self._encode_float_to_bytes(focus)
+
+    def set_phi(self, phi: float) -> None:
+        low_bound = -5 / 4 * math.pi
+        high_bound = 5 / 4 * math.pi
+        width = high_bound - low_bound
+
+        phi = ((phi - low_bound) % width) + low_bound
+        pan = self._phi_to_pan(phi)
+        self._pan, self._pan_fine = self._encode_float_to_bytes(pan)
+
+    def set_theta(self, theta: float) -> None:
+        theta = min(2/3 * math.pi, max(-2/3 * math.pi, theta))
+        tilt = self._theta_to_tilt(theta)
+        self._tilt, self._tilt_fine = self._encode_float_to_bytes(tilt)
+
+    def update(self, dmx: DMXUniverse):
+        dmx.set_int(self.chan_no, 1, self._pan)
+        dmx.set_int(self.chan_no, 2, self._pan_fine)
+        dmx.set_int(self.chan_no, 3, self._tilt)
+        dmx.set_int(self.chan_no, 4, self._tilt_fine)
+        dmx.set_int(self.chan_no, 5, self._color_wheel)
+        dmx.set_int(self.chan_no, 6, self._static_gobo)
+        dmx.set_int(self.chan_no, 7, self._prism1)
+        dmx.set_int(self.chan_no, 8, self._prism1_rot)
+        dmx.set_int(self.chan_no, 9, self._prism2)
+        dmx.set_int(self.chan_no, 10, self._prism2_rot)
+        dmx.set_int(self.chan_no, 11, self._strobe)
+        dmx.set_float(self.chan_no, 12, self._dimmer)
+        dmx.set_float(self.chan_no, 13, self._dimmer_fine)
+        dmx.set_float(self.chan_no, 14, self._focus)
+        dmx.set_float(self.chan_no, 15, self._focus_fine)
+        dmx.set_int(self.chan_no, 16, self._frost)
+        dmx.set_float(self.chan_no, 17, self._pan_tilt_speed)
+        dmx.set_int(self.chan_no, 18, self._special_function)
 
 
 class VaritecColorsStarbar12(DMXDevice):
