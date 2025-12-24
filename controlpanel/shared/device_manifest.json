@@ -33,7 +33,7 @@
     "i2c": null,
     "devices": {
       "StatusLEDs": ["LEDStrip", {"pin": 14, "length": 3}, {}],
-      "WarnLED": ["PWM", {"pin": 2, "update_rate_hz": 1}, {}],
+      "WarnLED": ["PWM", {"pin": 2}, {}],
       "WaterPressure": ["PWM", {"pin": 13}, {}],
       "Temperature": ["PWM", {"pin": 12}, {}],
       "WaterFlowSensor": ["WaterFlowSensor", {"pin": 4, "polling_rate_hz": 1.0}, {}]
@@ -49,10 +49,13 @@
       "Voltmeter3": ["PWM", {"pin": 16}, {}],
       "Voltmeter4": ["PWM", {"pin": 17}, {}],
       "Batterie": ["PWM", {"pin": 19}, {}],
-      "ChargingPort_LEDStrip": ["LEDStrip", {"pin": 13, "length": 30}, {}],
+      "BatterySlot": ["CompositePWM", {"pins": [27, 33, 25]}, {}],
       "AuthorizationKeyCharge": ["Button", {"pin": 15}, {}],
       "BatteryButtonLadestation": ["Button", {"pin": 21, "invert": true}, {}],
-      "PhiSwitch": ["Button", {"pin": 5, "invert": true}, {}]
+      "AntonLED": ["PWM", {"pin": 14, "intensity": 0.0}, {}],
+      "AntonSchalter": ["ADC", {"pin": 32}, {}],
+      "HandbremseHall": ["HallSensor", {"pin": 34, "polling_rate_hz": 5}, {"rolling_average_size": 5, "bounds": [0.19, 0.47]}],
+      "HandbremseButton": ["Button", {"pin": 4}, {}]
     }
   },
   "mainframe": {
@@ -73,7 +76,7 @@
     "spi": null,
     "i2c": null,
     "devices": {
-      "UVStrobe": ["PWM", {"pin": 19}, {}],
+      "UVStrobe": ["PWM", {"pin": 21}, {}],
       "PilzLEDs": ["LEDStrip", {"pin": 16, "length": 5, "update_rate_hz": 5, "rgb_order": "GRB"}, {}],
       "BananaPlugs": ["BananaPlugs", {"plug_pins": [33, 2, 32, 4], "socket_pins": [15, 13, 12, 14, 27, 26]}, {}]
     }
@@ -91,7 +94,14 @@
       "PowerSwitch": ["Button", {"pin": 32}, {}],
       "DialReset": ["Button", {"pin": 5}, {}],
       "TestHebel": ["Button", {"pin": 16}, {}],
-      "StatusLED": ["LEDStrip", {"pin": 33, "length": 1}, {}],
+      "StatusLED": ["LEDStrip", {"pin": 33, "length": 2}, {}],
+      "PotiLeft": ["ADC", {"pin":  34}, {}],
+      "PotiRight": ["ADC", {"pin":  35}, {}],
+      "MultiButton01": ["Button", {"pin": 22, "polling_rate_hz": 1.0, "invert": true}, {}],
+      "MultiButton02": ["Button", {"pin": 27, "polling_rate_hz": 1.0, "invert": true}, {}],
+      "MultiButton03": ["Button", {"pin": 25, "polling_rate_hz": 1.0, "invert": true}, {}],
+      "MultiButton04": ["Button", {"pin": 26, "polling_rate_hz": 1.0, "invert": true}, {}],
+      "MicButton": ["Button", {"pin": 2, "polling_rate_hz": 1.0, "invert": true}, {}],
       "SevenSegmentDisplay": ["SevenSegmentDisplay", {"pin_chip_select": 19, "digit_count": 16}, {}]
     }
   },
@@ -118,6 +128,34 @@
     "devices": {
       "_BatterieSpannung": ["ADC", {"pin": 32}, {}],
       "BatteriePWM": ["PWM", {"pin": 33}, {}]
+    }
+  },
+  "reaktor":
+  {
+    "spi": {
+      "mosi": 4,
+      "miso": 21,
+      "sck": 18,
+      "phase": 1,
+      "polarity": 1
+    },
+    "i2c": null,
+    "devices": {
+      "FogMachine": ["DigitalPin", {"pin": 22, "invert": true}, {}],
+      "Plasmakugel": ["DigitalPin", {"pin": 23, "invert": true}, {}],
+      "Buchsen": ["LEDStrip", {"pin": 16, "length": 3}, {}],
+      "PowerRead": ["Button", {"pin": 12}, {}],
+      "PowerWrite1": ["DigitalPin", {"pin": 13}, {}],
+      "PowerWrite2": ["DigitalPin", {"pin": 14}, {}],
+      "Buchse1": ["Button", {"pin": 25}, {}],
+      "Buchse2": ["Button", {"pin": 26}, {}],
+      "Buchse3": ["Button", {"pin": 27}, {}]
+    }
+  },
+  "reserve": {
+    "spi": null,
+    "i2c": null,
+    "devices": {
     }
   },
   "broken_stuff": {
