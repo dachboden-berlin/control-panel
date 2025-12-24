@@ -6,6 +6,7 @@ from controlpanel.upy.artnet import ArtNet
 
 
 _DEFAULT_SOFTWARE_DEBOUNCE: int = const(20)
+_DEFAULT_POLLING_RATE_HZ: float = const(0.0)
 
 
 class Button(Sensor):
@@ -16,9 +17,10 @@ class Button(Sensor):
             pin: int,
             *,
             invert: bool = False,
+            polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
             software_debounce_ms: int | None = _DEFAULT_SOFTWARE_DEBOUNCE,
     ) -> None:
-        super().__init__(_context[0], _name, polling_rate_hz=0)
+        super().__init__(_context[0], _name, polling_rate_hz=polling_rate_hz)
         self.pin = Pin(pin, Pin.IN, Pin.PULL_UP)
         self.pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._handle_interrupt)
         self._invert = invert
@@ -39,10 +41,14 @@ class Button(Sensor):
             self._last_press_time = current_time
         else:
             return
+        self._previous_state = value
         self._send_trigger_packet(value.to_bytes(1, "big"))
 
     def get_pressed(self) -> bool:
-        return not self.pin.value() ^ self._invert
+        return self.pin.value() ^ self._invert
 
     async def update(self) -> None:
-        pass
+        state = self.get_pressed()
+        if state != self._previous_state:
+            self._previous_state = state
+            self._send_trigger_packet(state.to_bytes(1, "big"))
