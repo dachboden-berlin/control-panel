@@ -8,6 +8,7 @@ CREDENTIALS = "credentials.json"
 HOSTNAME_MANIFEST = "hostname_manifest.json"
 MAC_ADDRESS: str | None = None
 LOCAL_IP: str | None = None
+INTERFACE: network.WLAN | network.LAN | None = None
 
 
 def log_error(error):

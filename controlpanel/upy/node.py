@@ -7,6 +7,8 @@ from controlpanel.upy.phys import Fixture, Sensor
 from controlpanel.shared.compatibility import Callable
 import time
 import uasyncio as asyncio
+import network
+import webrepl
 
 
 class Node:
@@ -95,7 +97,28 @@ class Node:
             for device in self.devices.values()
             if device.update_rate_ms > 0
         ]
+        tasks.append(self.connection_watchdog())
         await asyncio.gather(*tasks)
+
+    async def connection_watchdog(self, sleep_ms: int = 10_000, retries: int = 5):
+        attempt = 0
+        while True:
+            if utils.INTERFACE.isconnected():
+                # print("Connection is still live!")
+                attempt = 0
+                pass
+            else:
+                attempt += 1
+                utils.INTERFACE.disconnect()
+                if attempt >= retries:
+                    print("Max number of retries reached! Creating AP and stopping watchdog.")
+                    utils.INTERFACE = utils.create_ap()
+                    webrepl.start()
+                    break
+                print(f"We are not connected! Trying to reconnect, attempt #{attempt}")
+                utils.INTERFACE.connect()
+            await asyncio.sleep_ms(sleep_ms)
+
 
     def artcmd_callback(self, op_code: OpCode, ip: str, port: int, reply):
         command = reply.get("Command")
