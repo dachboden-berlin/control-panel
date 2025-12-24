@@ -26,4 +26,4 @@ class CompositePWM(Fixture):
     def parse_dmx_data(self, data: bytes):
         assert len(data) == 3, f"Data is of unexpected length ({len(data)} bytes)"
         for i, value in enumerate(data):
-            self.pwms[i].duty_u16 = self.u8_to_u16(value)
+            self.pwms[i].duty_u16(self.u8_to_u16(value))
