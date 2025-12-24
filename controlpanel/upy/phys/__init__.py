@@ -5,6 +5,8 @@ from .adc import ADC
 from .banana_plugs import BananaPlugs
 from .button import Button
 from .composite_pwm import CompositePWM
+from .digital_pin import DigitalPin
+from .hall_sensor import HallSensor
 from .fourteensegment import FourteenSegmentDisplay
 from .led_strip import LEDStrip
 from .pwm import PWM
