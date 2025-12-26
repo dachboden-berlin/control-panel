@@ -3,9 +3,7 @@
     "spi": null,
     "i2c": null,
     "devices": {
-      "DischargePort_LEDStrip": ["LEDStrip", {"pin": 22, "length": 30}, {}],
-      "BatteryButton": ["Button", {"pin": 14}, {}],
-      "AuthorizationKeyBVG": ["Button", {"pin": 12}, {}]
+      "AuthorizationKey2": ["Button", {"pin": 12}, {}]
     }
   },
   "chronometer":
@@ -49,9 +47,9 @@
       "Voltmeter3": ["PWM", {"pin": 16}, {}],
       "Voltmeter4": ["PWM", {"pin": 17}, {}],
       "Batterie": ["PWM", {"pin": 19}, {}],
-      "BatterySlot": ["CompositePWM", {"pins": [27, 33, 25]}, {}],
-      "AuthorizationKeyCharge": ["Button", {"pin": 15}, {}],
-      "BatteryButtonLadestation": ["Button", {"pin": 21, "invert": true}, {}],
+      "BatteryPortLightPanel": ["CompositePWM", {"pins": [27, 33, 25]}, {}],
+      "AuthorizationKey1": ["Button", {"pin": 15}, {}],
+      "BatteryPortButtonPanel": ["Button", {"pin": 21, "invert": true}, {}],
       "AntonLED": ["PWM", {"pin": 14, "intensity": 0.0}, {}],
       "AntonSchalter": ["ADC", {"pin": 32}, {}],
       "HandbremseHall": ["HallSensor", {"pin": 34, "polling_rate_hz": 5}, {"rolling_average_size": 5, "bounds": [0.19, 0.47]}],
@@ -141,6 +139,8 @@
     },
     "i2c": null,
     "devices": {
+      "BatteryPortButtonReactor": ["Button", {"pin": null}, {}],
+      "BatteryPortLightReactor": ["CompositePWM", {"pins": [null, null, null]}, {}],
       "FogMachine": ["DigitalPin", {"pin": 22, "invert": true}, {}],
       "Plasmakugel": ["DigitalPin", {"pin": 23, "invert": true}, {}],
       "Buchsen": ["LEDStrip", {"pin": 16, "length": 3}, {}],
