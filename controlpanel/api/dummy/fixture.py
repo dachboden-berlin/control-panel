@@ -10,8 +10,16 @@ class Fixture(BaseFixture):
         self._loop: asyncio.AbstractEventLoop = _loop
         self._current_task: asyncio.Future | None = None
         self._esp: ESP32 = _esp
+        self._deafened: bool = False
+
+    @property
+    def deafened(self) -> bool:
+        return self._deafened
 
     def _send_dmx_packet(self, data: bytes | bytearray) -> None:
+        if self._deafened:
+            return
+
         self._increment_seq()
 
         # Cancel any ongoing packet send task
