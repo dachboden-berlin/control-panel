@@ -158,6 +158,21 @@
     "devices": {
     }
   },
+  "dmx_devices": {
+    "spi": null,
+    "i2c": null,
+    "devices": {
+      "PanelSpotLeft": ["RGBWLED", {}, {"chan_no": 1}],
+      "PanelSpotRight": ["RGBWLED", {}, {"chan_no": 5}],
+      "EntranceSpotRight": ["RGBWLED", {}, {"chan_no": 9}],
+      "StarbarRight": ["VaritecColorsStarbar12", {}, {"chan_no": 13}],
+      "MovingHeadRight": ["HydroBeamX12", {}, {"chan_no": 65}],
+      "StarbarTop": ["VaritecColorsStarbar12", {}, {"chan_no": 83}],
+      "MovingHeadLeft": ["HydroBeamX12", {}, {"chan_no": 135}],
+      "StarbarLeft": ["VaritecColorsStarbar12", {}, {"chan_no": 153}],
+      "EntranceSpotLeft": ["RGBWLED", {}, {"chan_no": 205}]
+    }
+  },
   "broken_stuff": {
     "spi": null,
     "i2c": null,

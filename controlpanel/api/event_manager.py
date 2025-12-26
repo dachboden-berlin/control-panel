@@ -15,6 +15,7 @@ import io
 from controlpanel.api.dummy.esp32 import ESP32
 from anaconsole import console_command
 from controlpanel import api
+from controlpanel import dmx
 from .commons import (
     Event,
     Condition,
@@ -237,10 +238,14 @@ class EventManager:
                 filtered_kwargs = {key: value for key, value in kwargs.items()
                                    if key in cls.__init__.__code__.co_varnames}
                 try:
-                    device = (
-                        cls(self._artnet, self.loop, esp, device_name, **filtered_kwargs) if issubclass(cls, Fixture) else
-                        cls(self._artnet, device_name, **filtered_kwargs)
-                    )
+                    if issubclass(cls, Fixture):
+                        device = cls(self._artnet, self.loop, esp, device_name, **filtered_kwargs)
+                    elif issubclass(cls, Sensor):
+                        device = cls(self._artnet, device_name, **filtered_kwargs)
+                    elif issubclass(cls, dmx.DMXDevice):
+                        device = cls(device_name, **filtered_kwargs)
+                    else:
+                        raise ValueError(f"Unknown device type: {type(cls)}")
                 except TypeError:
                     print(f"Type Error raised when instantiating {filtered_kwargs.get('name')}.")
                     raise

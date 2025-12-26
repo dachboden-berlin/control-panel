@@ -8,7 +8,7 @@ from artnet import ArtNet
 class Sensor(BaseSensor):
     EVENT_TYPES: dict[str, Hashable] = dict()
 
-    def __init__(self, _artnet: ArtNet, name: str):
+    def __init__(self, _artnet: ArtNet, name: str, **kwargs):
         super().__init__(_artnet, name)
         self._muted: bool = False
 

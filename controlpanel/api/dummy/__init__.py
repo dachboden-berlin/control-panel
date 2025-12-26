@@ -16,3 +16,5 @@ from .servo import Servo
 from .seven_segment import SevenSegmentDisplay
 from .shift_registers import PisoShiftRegister, SipoShiftRegister
 from .water_flow_sensor import WaterFlowSensor
+
+from ...dmx.devices import *

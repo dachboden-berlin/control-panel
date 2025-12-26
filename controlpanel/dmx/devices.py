@@ -416,6 +416,8 @@ class RGBWLED(DMXDevice):
         self.b = value[2]
         if len(value) == 4:
             self.w = value[3]
+        else:
+            self.w = 0
 
     @property
     def r(self):

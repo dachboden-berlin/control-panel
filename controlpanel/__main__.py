@@ -2,7 +2,7 @@ import sys
 from threading import Thread
 from artnet import ArtNet
 from controlpanel.game_manager import GameManager
-from controlpanel.dmx import DMXUniverse, device_list
+from controlpanel.dmx import DMXUniverse, DMXDevice
 from controlpanel import api
 import argparse
 
@@ -54,7 +54,7 @@ def main():
     api.Services.game_manager = game_manager
 
     try:
-        api.Services.dmx = DMXUniverse(None, devices=device_list, target_frequency=10)
+        api.Services.dmx = DMXUniverse(None, devices=[device for device in event_manager.devices.values() if isinstance(device, DMXDevice)], target_frequency=10)
     except ValueError as err:
         print('Unable to initiate DMX Universe because of value error.')  # occurred on macOS
         print(err)
