@@ -56,6 +56,7 @@ def update_led_ring():
         else:
             api.get_device("BatteryPortLightPanel").color = (0, 0, 0)
             api.get_device("BatteryPortLightPanel").blackout()
+            api.get_device("")
 
 
 def update_cell():
