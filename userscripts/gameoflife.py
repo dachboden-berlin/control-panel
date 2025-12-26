@@ -8,7 +8,7 @@ class CellState(Enum):
     DEAD = auto()
 
 
-BOARD: list[list[CellState]] = [[CellState.DEAD for _ in range(HEIGHT)] for _ in range(WIDTH)]
+BOARD = [[CellState.DEAD for _ in range(HEIGHT)] for _ in range(WIDTH)]
 COLORS = {
     CellState.ALIVE: (50, 50, 80),
     CellState.DEAD: (0, 0, 0),
@@ -16,7 +16,7 @@ COLORS = {
 
 
 @api.callback(source="MainframeKeys", action="ButtonsChanged")
-def toggle_cells(event: api.Event[tuple[tuple[int, bool], ...]]):
+def toggle_cells(event):
     for button_id, pressed in event.value:
         if pressed:
             x, y = button_pos(button_id)

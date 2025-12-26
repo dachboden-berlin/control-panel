@@ -5,6 +5,8 @@ from controlpanel.game_manager import GameManager
 from controlpanel.dmx import DMXUniverse, DMXDevice
 from controlpanel import api
 import argparse
+from controlpanel.server import app
+import uvicorn
 
 
 def parse_args() -> tuple[argparse.Namespace, list[str]]:
@@ -30,6 +32,8 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
                              'A preset is a .txt file containing newline-separated script file names')
     parser.add_argument('--cheats', '-c', action='store_true', default=False,
                         help='Enable cheat-protected console commands (disabled by default)')
+    parser.add_argument('--start-server', action='store_true',
+                        help='Start the script upload server (disabled by default)')
     return parser.parse_known_args()
 
 
@@ -37,11 +41,11 @@ def main():
     args, unknown_args = parse_args()
 
     artnet = ArtNet()  # This is where we initialise our one and ONLY ArtNet instance for the entire program.
-    api.Services.artnet = artnet
+    api.services.artnet = artnet
 
     event_manager = api.EventManager(artnet)
-    api.Services.event_manager = event_manager
-    # needs to be called after Services.event_manager has been set
+    api.services.event_manager = event_manager
+    # needs to be called after services.event_manager has been set
     event_manager.instantiate_devices([api.dummy,])
 
     game_manager = GameManager(resolution=(args.width, args.height) if not args.no_gui else None,
@@ -51,10 +55,10 @@ def main():
                                stretch_to_fit=args.stretch_to_fit,
                                enable_cheats=args.cheats,
                                )
-    api.Services.game_manager = game_manager
+    api.services.game_manager = game_manager
 
     try:
-        api.Services.dmx = DMXUniverse(None, devices=[device for device in event_manager.devices.values() if isinstance(device, DMXDevice)], target_frequency=10)
+        api.services.dmx = DMXUniverse(None, devices=[device for device in event_manager.devices.values() if isinstance(device, DMXDevice)], target_frequency=10)
     except ValueError as err:
         print('Unable to initiate DMX Universe because of value error.')  # occurred on macOS
         print(err)
@@ -63,6 +67,10 @@ def main():
         sys.path.append(path)
 
     api.load_scripts(args.load_scripts)
+
+    if args.start_server:
+        server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8000, log_config=None))
+        Thread(target=server.run, daemon=True).start()
 
     game_manager_thread = Thread(target=game_manager.run, daemon=False)
     game_manager_thread.run()

@@ -1,0 +1,240 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Control Panel Addon Upload Tool</title>
+    <link rel="stylesheet" href="/static/style.css">
+
+    <!-- Ace Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.15.0/ace.js"></script>
+</head>
+<body>
+
+<h1 class="page-title">CONTROL PANEL ADDON UPLOAD TOOL</h1>
+
+<div id="float-msg" class="float-message {{ message_class }}">{{ message }}</div>
+
+<div class="crt-overlay"></div>
+
+<div class="container">
+
+    <!-- SELECT FILE -->
+    <label class="upload-btn">
+        SELECT .PY FILE
+        <input type="file" id="fileInput" accept=".py">
+    </label>
+
+    <!-- ADDON NAME -->
+    <div class="addon-row">
+        <label class="left-label">Addon name:</label>
+        <input type="text" id="filenameField" class="filename-input">
+    </div>
+
+    <!-- EDITOR -->
+    <div id="editor" class="editor-box"></div>
+
+    <!-- LINT BUTTON -->
+    <button id="lintBtn" class="action-btn">LINT CODE</button>
+
+    <!-- UPLOAD BUTTON -->
+    <form id="uploadForm" action="/upload" method="post">
+        <input type="hidden" name="filename" id="filenameHidden">
+        <input type="hidden" name="code" id="codeHidden">
+        <button id="submitBtn" class="submit-btn disabled" type="submit" disabled>UPLOAD</button>
+    </form>
+
+</div>
+
+<script>
+    // -----------------------------
+    // ACE EDITOR SETUP
+    // -----------------------------
+    const editor = ace.edit("editor");
+    editor.session.setMode("ace/mode/python");
+    editor.setTheme("ace/theme/monokai");
+    editor.setOptions({
+        fontSize: "14px",
+        showPrintMargin: false,
+    });
+
+    editor.setValue(
+`# Load existing code here or write your own!
+
+from controlpanel import api
+
+@api.callback(source="BigRedButton",action="ButtonPressed")
+def button_pressed(event):
+    color = (255, 0, 0) if event.value else (0, 0, 0)
+    api.get_device("StatusLED").set_pixel(0, color)
+`, -1);
+
+
+    // -----------------------------
+    // DOM ELEMENTS
+    // -----------------------------
+    const fileInput = document.getElementById("fileInput");
+    const filenameField = document.getElementById("filenameField");
+    const filenameHidden = document.getElementById("filenameHidden");
+    const codeHidden = document.getElementById("codeHidden");
+    const lintBtn = document.getElementById("lintBtn");
+    const submitBtn = document.getElementById("submitBtn");
+
+
+    // -----------------------------
+    // STATE
+    // -----------------------------
+    let lintUpToDate = false;
+
+
+    // -----------------------------
+    // HELPERS
+    // -----------------------------
+    function disableUpload(reason) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add("disabled");
+        submitBtn.dataset.reason = reason;
+    }
+
+    function enableUpload() {
+        submitBtn.disabled = false;
+        submitBtn.classList.remove("disabled");
+        submitBtn.dataset.reason = "";
+    }
+
+    function updateSubmitState() {
+        const annotations = editor.session.getAnnotations();
+        const hasErrors = annotations.length > 0;
+        const hasName = filenameField.value.trim().length > 0;
+
+        if (!lintUpToDate) {
+            disableUpload("Linting required before upload");
+            return;
+        }
+
+        if (hasErrors) {
+            disableUpload("Linting errors present");
+            return;
+        }
+
+        if (!hasName) {
+            disableUpload("No name supplied");
+            return;
+        }
+
+        enableUpload();
+    }
+
+
+    // -----------------------------
+    // LOAD FILE INTO EDITOR
+    // -----------------------------
+    fileInput.addEventListener("change", async () => {
+        if (fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const text = await file.text();
+
+            editor.setValue(text, -1);
+
+            // Autofill addon name
+            let stem = file.name.endsWith(".py")
+                ? file.name.slice(0, -3)
+                : file.name;
+            filenameField.value = stem;
+
+            // If user loads a file → lint is no longer up-to-date
+            lintUpToDate = false;
+
+            // Auto-lint
+            lintBtn.click();
+        }
+    });
+
+
+    // -----------------------------
+    // LINTING
+    // -----------------------------
+    lintBtn.addEventListener("click", async () => {
+        const code = editor.getValue();
+
+        const formData = new FormData();
+        formData.append("code", code);
+
+        const res = await fetch("/lint", { method: "POST", body: formData });
+        const data = await res.json();
+
+        const annotations = data.results.map(r => ({
+            row: r.line - 1,
+            column: r.column,
+            text: r.message,
+            type: "error"
+        }));
+
+        editor.session.setAnnotations(annotations);
+
+        lintUpToDate = true;
+        updateSubmitState();
+    });
+
+
+    // -----------------------------
+    // EDITOR CHANGES (FOR REQUIRING RELINT)
+    // -----------------------------
+    editor.session.on("change", () => {
+        lintUpToDate = false;
+        disableUpload("Linting required before upload");
+    });
+
+
+    // -----------------------------
+    // UPLOAD
+    // -----------------------------
+    document.getElementById("uploadForm").addEventListener("submit", () => {
+        filenameHidden.value = filenameField.value.trim();
+        codeHidden.value = editor.getValue();
+        // Editor content NOT cleared — by request
+    });
+
+    filenameField.addEventListener("input", updateSubmitState);
+
+
+    // -----------------------------
+    // FLOAT MESSAGE
+    // -----------------------------
+    window.addEventListener("load", () => {
+        const box = document.getElementById("float-msg");
+        if (box.textContent.trim().length > 0) {
+            box.classList.add("visible");
+            setTimeout(() => box.classList.remove("visible"), 4500);
+        }
+    });
+
+
+    // -----------------------------
+    // UPLOAD TOOLTIP
+    // -----------------------------
+    const tooltip = document.createElement("div");
+    tooltip.className = "upload-tooltip";
+    document.body.appendChild(tooltip);
+
+    submitBtn.addEventListener("mousemove", (e) => {
+        if (!submitBtn.disabled) {
+            tooltip.classList.remove("visible");
+            return;
+        }
+
+        const reason = submitBtn.dataset.reason || "Upload unavailable";
+
+        tooltip.textContent = reason;
+        tooltip.style.left = e.pageX + 12 + "px";
+        tooltip.style.top = e.pageY + 12 + "px";
+        tooltip.classList.add("visible");
+    });
+
+    submitBtn.addEventListener("mouseleave", () => {
+        tooltip.classList.remove("visible");
+    });
+
+</script>
+
+</body>
+</html>

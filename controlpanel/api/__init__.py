@@ -10,7 +10,7 @@ from .commons import (
     Subscriber,
     )
 from typing import Literal, TYPE_CHECKING, Callable, TypeVar
-from .services import Services
+from .services import services
 from .load_scripts import load_scripts
 from .api import call_with_frequency, fire_event, subscribe, send_dmx
 from controlpanel.game_manager.sound import play_sound
@@ -35,17 +35,17 @@ if TYPE_CHECKING:
 
 def __getattr__(name: Literal["artnet", "event_manager", "game_manager", "dmx"]):
     if name == "artnet":
-        return Services.artnet
+        return services.artnet
     elif name == "event_manager":
-        return Services.event_manager
+        return services.event_manager
     elif name == "game_manager":
-        return Services.game_manager
+        return services.game_manager
     elif name == "dmx":
-        return Services.dmx
+        return services.dmx
     elif name == "loaded_scripts":
-        return Services.loaded_scripts
+        return services.loaded_scripts
     elif name == "add_game":
-        return Services.game_manager.add_game
+        return services.game_manager.add_game
     elif name == "get_game":
-        return Services.game_manager.get_game
+        return services.game_manager.get_game
     raise AttributeError(f"cannot import attribute '{name}' from '{__package__}'")

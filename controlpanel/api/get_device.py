@@ -1,6 +1,6 @@
 from controlpanel.shared.base import Device
-from .services import Services
+from .services import services
 
 
 def get_device(device_name) -> Device:
-    return Services.event_manager.devices.get(device_name)
+    return services.event_manager.devices.get(device_name)

@@ -17,7 +17,11 @@ dependencies = [
     "pygame_shaders",
     "numpy",
     "anaconsole @ git+https://github.com/AsinoEsel/anaconsole-pygame.git@main#egg=anaconsole",
+    "RestrictedPython",
+    "fastapi[standard]",
     "artnet-python @ git+https://github.com/AsinoEsel/artnet-python.git@main#egg=artnet",
+    "control-panel-terminal @ git+https://github.com/AsinoEsel/control-panel-terminal.git@main",
+    "flake8 >= 5.0",
 ]
 
 [project.optional-dependencies]
@@ -26,10 +30,13 @@ dev = [
     "pathspec",
 ]
 
+[project.entry-points."flake8.extension"]
+RSP = "controlpanel.linting.restricted_checker:RestrictedPythonChecker"
+
 [project.scripts]
 controlpanel = "controlpanel.__main__:main"
 generate_stubs = "dev_tools.generate_stubs.main:generate_all_stubs"
-transfer = "dev_tools.transfer.transfer:transfer"
+transfer = "dev_tools.transfer.transfer:main"
 flash_firmware = "dev_tools.flash_firmware.flash_firmware:main"
 
 [tool.setuptools]

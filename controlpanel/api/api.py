@@ -3,7 +3,7 @@ import threading
 from typing import TypeVar
 from controlpanel.shared.base import Device
 from controlpanel.api.dummy import Fixture
-from .services import Services
+from .services import services
 from .commons import EventSourceType, EventActionType, EventValueType, CallbackType
 import inspect
 from types import ModuleType, FrameType
@@ -31,7 +31,7 @@ def fire_event(source: EventSourceType | None = None,
                ts: float | None = None) -> None:
     if not source:
         source = _get_caller_name_and_module()
-    Services.event_manager.fire_event(source, action, value, sender=sender, ts=ts)
+    services.event_manager.fire_event(source, action, value, sender=sender, ts=ts)
 
 
 def call_with_frequency(frequency: float | int):
@@ -62,9 +62,9 @@ def subscribe(callback: CallbackType,
               fire_once=False,
               allow_parallelism: bool = False
               ) -> None:
-    if not Services.event_manager:
+    if not services.event_manager:
         raise RuntimeError("Event manager not initialized")
-    Services.event_manager.subscribe(callback,
+    services.event_manager.subscribe(callback,
                                      source_name,
                                      action,
                                      condition_value,
@@ -73,7 +73,7 @@ def subscribe(callback: CallbackType,
 
 
 def send_dmx(device_name: str, data: bytes):
-    device: Device = Services.event_manager.devices.get(device_name)
+    device: Device = services.event_manager.devices.get(device_name)
     if device is None:
         print("No device with that name exists in the Device Manifest.")
         return
@@ -82,4 +82,4 @@ def send_dmx(device_name: str, data: bytes):
         return
     universe = device.universe
     print(f"Sending DMX Package to {device_name} @ {universe} with data {data}")
-    Services.artnet.send_dmx(universe, 0, bytearray(data))
+    services.artnet.send_dmx(universe, 0, bytearray(data))
