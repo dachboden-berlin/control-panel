@@ -1,3 +1,4 @@
 battery
 override_ips
 example_game
+terminal_gui
