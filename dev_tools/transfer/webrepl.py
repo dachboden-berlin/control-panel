@@ -181,7 +181,7 @@ def run_webrepl_cmd(ws: WebSocket, command):
     return output.decode(errors="ignore")
 
 
-def webrepl_connect(host, password, port=WEBREPL_PORT, timeout: float = 10.0) -> WebSocket:
+def webrepl_connect(host, password, port=WEBREPL_PORT, timeout: float = 30.0) -> WebSocket:
     """Open and return a persistent WebREPL connection (WebSocket)."""
     s = socket.socket()
     s.settimeout(timeout)

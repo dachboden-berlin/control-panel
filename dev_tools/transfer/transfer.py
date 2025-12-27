@@ -97,7 +97,7 @@ def main() -> None:
     parser.add_argument("--IP", help="IP override")
     parser.add_argument('-f', '--force', action='store_true', help='Ignore the checksums.')
     parser.add_argument('-p', '--password', help='The webrepl password.')
-    parser.add_argument("--give-up-on-failed-attempt", action='store_true', help="Stop transferring files if a single file failed to transfer.")
+    parser.add_argument("--transfer-files-only", action='store_true', help="Only transfer files, don't create folder structure.")
     args = parser.parse_args()
 
     hostname: str = args.hostname
@@ -132,10 +132,11 @@ def main() -> None:
         return
     print("Connected!")
 
-    print("Creating folder structure... ", end="")
-    structure = build_structure_from_files(changed_files, path)
-    create_structure(ws, structure)
-    print("Done!")
+    if not args.transfer_files_only:
+        print("Creating folder structure... ", end="")
+        structure = build_structure_from_files(changed_files, path)
+        create_structure(ws, structure)
+        print("Done!")
 
     print("Transferring files... ")
     for file in changed_files:
@@ -147,7 +148,7 @@ def main() -> None:
 
     try:
         webrepl.run_webrepl_cmd(ws, 'import machine; machine.reset()')
-    except TimeoutError:
+    except (TimeoutError, ConnectionResetError):
         pass
 
     ws.close()

@@ -83,7 +83,7 @@ def establish_connection() -> network.LAN | network.WLAN:
     return create_ap()
 
 
-def establish_wifi_connection(timeout_ms: int = 10_000) -> network.WLAN | None:
+def establish_wifi_connection(timeout_ms: int = 20_000) -> network.WLAN | None:
     import time
     import sys
 

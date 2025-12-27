@@ -116,7 +116,7 @@
     "spi": null,
     "i2c": null,
     "devices": {
-      "fourteensegment": ["FourteenSegmentDisplay", {"pin": 12, "element_count": 2}, {}]
+      "fourteensegment": ["FourteenSegmentDisplay", {"pin": 16, "element_count": 6}, {}]
     }
   },
   "battery":
@@ -139,10 +139,10 @@
     },
     "i2c": null,
     "devices": {
-      "BatteryPortButtonReactor": ["Button", {"pin": null}, {}],
-      "BatteryPortLightReactor": ["CompositePWM", {"pins": [null, null, null]}, {}],
-      "FogMachine": ["DigitalPin", {"pin": 22, "invert": true}, {}],
-      "Plasmakugel": ["DigitalPin", {"pin": 23, "invert": true}, {}],
+      "BatteryPortButtonReactor": ["Button", {"pin": 4}, {}],
+      "BatteryPortLightReactor": ["CompositePWM", {"pins": [32, 33, 21]}, {}],
+      "FogMachine": ["DigitalPin", {"pin": 22, "invert": false}, {}],
+      "Plasmakugel": ["DigitalPin", {"pin": 23, "invert": false}, {}],
       "Buchsen": ["LEDStrip", {"pin": 16, "length": 3}, {}],
       "PowerRead": ["Button", {"pin": 12}, {}],
       "PowerWrite1": ["DigitalPin", {"pin": 13}, {}],
@@ -152,10 +152,21 @@
       "Buchse3": ["Button", {"pin": 27}, {}]
     }
   },
-  "reserve": {
-    "spi": null,
+  "telegraph": {
+    "spi": {
+      "mosi": 12,
+      "miso": 22,
+      "sck": 16,
+      "phase": 1,
+      "polarity": 1
+    },
     "i2c": null,
     "devices": {
+      "Poti1": ["ADC", {"pin": 32}, {}],
+      "Poti2": ["ADC", {"pin": 35}, {}],
+      "Poti3": ["ADC", {"pin": 34}, {}],
+      "TelegraphLED": ["LEDStrip", {"pin": 21, "length": 1}, {}],
+      "AnnieShiftRegister": ["PisoShiftRegister", {"latch": 17, "count": 1, "polling_rate_hz": 10}, {}]
     }
   },
   "dmx_devices": {
@@ -171,6 +182,13 @@
       "MovingHeadLeft": ["HydroBeamX12", {}, {"chan_no": 135}],
       "StarbarLeft": ["VaritecColorsStarbar12", {}, {"chan_no": 153}],
       "EntranceSpotLeft": ["RGBWLED", {}, {"chan_no": 205}]
+    }
+  },
+  "pilzleds": {
+    "spi": null,
+    "i2c": null,
+    "devices": {
+      "Pilze": ["LEDStrip", {"pin": 4, "length": 5}, {}]
     }
   },
   "broken_stuff": {

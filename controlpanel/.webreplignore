@@ -4,6 +4,7 @@ game_manager/
 scripts/
 server/
 shaders/
+linting/
 controlpanel/__init__.py
 controlpanel/__main__.py
 __pycache__/
