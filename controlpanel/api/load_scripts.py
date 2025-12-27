@@ -6,19 +6,35 @@ import sys
 
 
 SCRIPT_DIR = pathlib.Path(__file__).parent.parent.parent / "userscripts"
+WHITELIST_PATH = SCRIPT_DIR / "whitelist.txt"
+WHITELIST: set[str] = set(WHITELIST_PATH.read_text().splitlines())
 
 
-def load_script(name: str) -> types.ModuleType:
+def load_script(name: str) -> types.ModuleType | None:
     from .load_scripts_helper import make_globals
+
+    whitelisted = name in WHITELIST
+    if whitelisted:
+        try:
+            module = __import__(f"userscripts.{name}")
+            print(f"Loaded {name}")
+            return module
+        except ImportError:
+            pass
 
     script_path = (SCRIPT_DIR / name).with_suffix(".py")
     if not script_path.is_file():
-        raise FileNotFoundError(f"{script_path} is not a file")
+        print(f"Failed to load {name}: file could not be found.")
+        return None
 
     source_code = script_path.read_text()
     name = script_path.stem
 
-    bytecode = compile_restricted(source_code, filename=name, mode="exec")
+    try:
+        bytecode = compile_restricted(source_code, filename=name, mode="exec")
+    except SyntaxError as e:
+        print(f"Failed to compile {name}: {e}")
+        return None
 
     module_name = f"userscripts.{name}"
     module = types.ModuleType(module_name)
@@ -26,12 +42,15 @@ def load_script(name: str) -> types.ModuleType:
     module.__dict__.update(make_globals())
     module.__dict__["__name__"] = module_name
 
-    exec(bytecode, module.__dict__, module.__dict__)
+    if name in WHITELIST:
+        exec(bytecode)
+    else:
+        exec(bytecode, module.__dict__, module.__dict__)
 
     sys.modules[module_name] = module
     controlpanel.api.services.loaded_scripts[module_name] = module
 
-    print(f"Loaded {module.__name__}")
+    print(f"Loaded {name}")
     return module
 
 

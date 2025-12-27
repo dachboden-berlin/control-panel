@@ -124,6 +124,14 @@ def button_pressed(event):
         enableUpload();
     }
 
+    function showFloatMessage(text, type) {
+    const box = document.getElementById("float-msg");
+    box.textContent = text;
+    box.className = `float-message ${type}`;
+    box.classList.add("visible");
+
+    setTimeout(() => box.classList.remove("visible"), 4500);
+}
 
     // -----------------------------
     // LOAD FILE INTO EDITOR
@@ -186,13 +194,33 @@ def button_pressed(event):
 
 
     // -----------------------------
-    // UPLOAD
-    // -----------------------------
-    document.getElementById("uploadForm").addEventListener("submit", () => {
-        filenameHidden.value = filenameField.value.trim();
-        codeHidden.value = editor.getValue();
-        // Editor content NOT cleared — by request
+// UPLOAD (AJAX — NO PAGE REFRESH)
+// -----------------------------
+document.getElementById("uploadForm").addEventListener("submit", async (e) => {
+    e.preventDefault(); // 🚫 stop page refresh
+
+    const filename = filenameField.value.trim();
+    const code = editor.getValue();
+
+    const formData = new FormData();
+    formData.append("filename", filename);
+    formData.append("code", code);
+
+    const res = await fetch("/upload", {
+        method: "POST",
+        body: formData
     });
+
+    const data = await res.json();
+
+    showFloatMessage(data.message, data.status);
+
+    if (data.status === "success") {
+        lintUpToDate = false;
+        disableUpload("Linting required before upload");
+    }
+});
+
 
     filenameField.addEventListener("input", updateSubmitState);
 

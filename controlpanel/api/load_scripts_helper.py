@@ -10,6 +10,7 @@ controlpanel_fake = types.SimpleNamespace(api=api)  # Fake controlpanel namespac
 
 ALLOWED_MODULES = {
     'math': __import__('math'),
+    'time': __import__('time'),
     'random': __import__('random'),
     'enum': __import__('enum'),
     'controlpanel': controlpanel_fake,

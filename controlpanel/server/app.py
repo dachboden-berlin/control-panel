@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pathlib import Path
@@ -13,7 +12,7 @@ app = FastAPI()
 ROOT = Path(__file__).resolve().parents[2]
 STATIC_DIR = ROOT / "static"
 TEMPLATE_DIR = ROOT / "templates"
-UPLOAD_DIR = ROOT / "uploaded_scripts"
+UPLOAD_DIR = ROOT / "userscripts"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -84,23 +83,27 @@ async def upload(
     filename: str = Form(...),
     code: str = Form(...)
 ):
-    """
-    Uploads editor content after linting passes.
-    """
     code = code.replace("\r\n", "\n").replace("\r", "\n")
 
     issues = run_lint(code)
-
-    response = RedirectResponse("/", status_code=303)
-
     if issues:
-        response.set_cookie("upload_msg", "Upload failed: Code did not pass linting.", max_age=5)
-        response.set_cookie("upload_class", "error", max_age=5)
-        return response
+        return {
+            "status": "error",
+            "message": "Upload failed: Code did not pass linting."
+        }
 
     final_name = Path(filename).stem + ".py"
-    (UPLOAD_DIR / final_name).write_text(code, encoding="utf-8")
+    target_path = UPLOAD_DIR / final_name
 
-    response.set_cookie("upload_msg", f"Upload successful ({final_name})", max_age=5)
-    response.set_cookie("upload_class", "success", max_age=5)
-    return response
+    if target_path.exists():
+        return {
+            "status": "error",
+            "message": f"Upload failed: '{final_name}' already exists."
+        }
+
+    target_path.write_text(code, encoding="utf-8")
+
+    return {
+        "status": "success",
+        "message": f"Upload successful ({final_name})"
+    }
