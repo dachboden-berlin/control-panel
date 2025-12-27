@@ -176,12 +176,12 @@
       "PanelSpotLeft": ["RGBWLED", {}, {"chan_no": 1}],
       "PanelSpotRight": ["RGBWLED", {}, {"chan_no": 5}],
       "EntranceSpotRight": ["RGBWLED", {}, {"chan_no": 9}],
-      "StarbarRight": ["VaritecColorsStarbar12", {}, {"chan_no": 13}],
-      "MovingHeadRight": ["HydroBeamX12", {}, {"chan_no": 65}],
-      "StarbarTop": ["VaritecColorsStarbar12", {}, {"chan_no": 83}],
-      "MovingHeadLeft": ["HydroBeamX12", {}, {"chan_no": 135}],
-      "StarbarLeft": ["VaritecColorsStarbar12", {}, {"chan_no": 153}],
-      "EntranceSpotLeft": ["RGBWLED", {}, {"chan_no": 205}]
+      "StarbarRight": ["VaritecColorsStarbar12", {}, {"chan_no": 15}],
+      "MovingHeadRight": ["HydroBeamX12", {}, {"chan_no": 67}],
+      "StarbarTop": ["VaritecColorsStarbar12", {}, {"chan_no": 85}],
+      "MovingHeadLeft": ["HydroBeamX12", {}, {"chan_no": 137}],
+      "StarbarLeft": ["VaritecColorsStarbar12", {}, {"chan_no": 155}],
+      "EntranceSpotLeft": ["RGBWLED", {}, {"chan_no": 207}]
     }
   },
   "pilzleds": {
