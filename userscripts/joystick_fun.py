@@ -98,8 +98,6 @@ def loop():
             if hasattr(dev, "set_intensity"):
                 dev.set_intensity(1.0 if is_trigger_held else 0.0)
 
-            if gobo_changed:
-                 dev._static_gobo = GOBOS[current_gobo_index]
 
     except Exception as e:
         print(f"[Joystick] Error: {e}")
