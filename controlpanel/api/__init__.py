@@ -16,7 +16,30 @@ from .api import call_with_frequency, fire_event, subscribe, send_dmx
 from controlpanel.game_manager.sound import play_sound
 from .callback import callback
 from .get_device import get_device
+from .joystick import Joystick
 from .event_manager import EventManager
+
+
+def get_joystick(index: int = 0) -> Joystick | None:
+    """
+    Get the Nth connected joystick, wrapped in a safe Joystick object.
+    :param index: The index of the joystick (default 0 for the first one).
+    :return: Joystick object or None if not found or GameManager not initialized.
+    """
+    if services.game_manager is None:
+        return None
+    
+    # helper to access private _joysticks safely
+    joysticks = getattr(services.game_manager, "_joysticks", {})
+    if not joysticks:
+        return None
+        
+    try:
+        # Return the Nth joystick connected
+        raw_joystick = list(joysticks.values())[index]
+        return Joystick(raw_joystick)
+    except IndexError:
+        return None
 
 if TYPE_CHECKING:
     from artnet import ArtNet

@@ -321,6 +321,9 @@ class HydroBeamX12(DMXDevice):
         assert 0.0 <= x <= 1.0
         n = int(round(x * 65535))
         return (n >> 8) & 0xFF, n & 0xFF
+    
+    def set_gobo(self, value: int):
+        self._static_gobo = max(0, min(255, value))
 
     def set_color(self, color: COLOR | int) -> None:
         self._color_wheel = color
