@@ -266,8 +266,29 @@ class HydroBeamX12(DMXDevice):
         WHITE_COOL = 52
         UV = 56
 
+    COLOR_MAP: dict[COLOR, tuple[int, int, int]] = {
+        COLOR.WHITE: (255, 255, 255),
+        COLOR.RED: (255, 0, 0),
+        COLOR.ORANGE: (255, 128, 0),
+        COLOR.AQUAMARINE: (128, 255, 0),
+        COLOR.GREEN: (128, 0, 255),
+        COLOR.LIGHT_GREEN: (0, 0, 255),
+        COLOR.LAVENDER: (128, 128, 255),
+        COLOR.PINK: (128, 0, 128),
+        COLOR.LIGHT_YELLOW: (255, 255, 0),
+        COLOR.MAGENTA: (128, 128, 128),
+        COLOR.CYAN: (0, 128, 255),
+        COLOR.YELLOW: (255, 255, 0),
+        COLOR.WHITE_WARM: (255, 200, 200),
+        COLOR.WHITE_COOL: (200, 200, 255),
+        COLOR.UV: (128, 64, 255),
+    }
+
     def __init__(self, name: str, chan_no: int):
         super().__init__(name, chan_no, num_chans=18)
+        self._phi: float = 0.0
+        self._theta: float = 0.0
+
         self._pan: int = 255//2
         self._pan_fine: int = 255//2
         self._tilt: float = 255//2
@@ -317,12 +338,12 @@ class HydroBeamX12(DMXDevice):
         high_bound = 5 / 4 * math.pi
         width = high_bound - low_bound
 
-        phi = ((phi - low_bound) % width) + low_bound
+        self._phi = ((phi - low_bound) % width) + low_bound
         pan = self._phi_to_pan(phi)
         self._pan, self._pan_fine = self._encode_float_to_bytes(pan)
 
     def set_theta(self, theta: float) -> None:
-        theta = min(2/3 * math.pi, max(-2/3 * math.pi, theta))
+        self._theta = min(2/3 * math.pi, max(-2/3 * math.pi, theta))
         tilt = self._theta_to_tilt(theta)
         self._tilt, self._tilt_fine = self._encode_float_to_bytes(tilt)
 
