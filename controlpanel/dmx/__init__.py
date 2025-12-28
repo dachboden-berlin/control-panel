@@ -11,5 +11,5 @@ Example usage (assuming the manifest.py file includes a device named "Laser" of 
 
 
 from .dmx import DMXUniverse, DMXDevice, get_device_url
-from .devices import VaritecColorsStarbar12, MovingHead, RGBWLED
+from .devices import VaritecColorsStarbar12, MovingHead, RGBWLED, HydroBeamX12
 from .animations import *

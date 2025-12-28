@@ -116,7 +116,7 @@
     "spi": null,
     "i2c": null,
     "devices": {
-      "fourteensegment": ["FourteenSegmentDisplay", {"pin": 16, "element_count": 6}, {}]
+      "fourteensegment": ["FourteenSegmentDisplay", {"pin": 16, "element_count": 3}, {}]
     }
   },
   "battery":
