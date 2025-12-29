@@ -2,5 +2,6 @@ battery
 override_ips
 example_game
 terminal_gui
-gameoflife
+test_dmx
+starbars
 joystick_fun

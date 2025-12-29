@@ -1,5 +1,5 @@
 from controlpanel import api
-from controlpanel.dmx.devices import HydroBeamX12
+#from controlpanel.dmx.devices import HydroBeamX12
 
 # --- Configuration ---
 
@@ -29,6 +29,7 @@ def get_button_color():
     return (r, g, b), is_active
 
 def rgb_to_moving_head_color(r, g, b):
+    return (0,0,0)
     """Maps RGB combination to HydroBeamX12.COLOR enum."""
     if r and g and b: return HydroBeamX12.COLOR.WHITE
     if r and g:       return HydroBeamX12.COLOR.YELLOW
@@ -50,7 +51,7 @@ def on_button_event(event: api.Event):
     # Calculate colors once
     rgb_color = (r, g, b)
     mh_color = rgb_to_moving_head_color(r, g, b)
-
+    print("WHITELIST ALLOWS THE PRINT!!!", event)
     for dev_name in DMX_DEVICES:
         dev = api.get_device(dev_name)
         if not dev:
@@ -58,6 +59,7 @@ def on_button_event(event: api.Event):
             
         # 1. Moving Heads (HydroBeamX12)
         if hasattr(dev, "set_color") and hasattr(dev, "set_intensity"):
+            print("Moving Head")
             if is_active:
                 dev.set_color(mh_color)
                 dev.set_intensity(1.0)
@@ -67,6 +69,7 @@ def on_button_event(event: api.Event):
         # 2. Starbars (VaritecColorsStarbar12)
         elif hasattr(dev, "set_leds_to_color") and hasattr(dev, "turn_off_lights"):
              # Set Color
+             print("Starbar")
              dev.set_leds_to_color(rgb_color)
              # Ensure 'white/effect' LEDs are off
              if hasattr(dev, "turn_off_lights"):
@@ -75,13 +78,18 @@ def on_button_event(event: api.Event):
         # 3. RGBW Spots (RGBWLED)
         elif hasattr(dev, "color"): # RGBWLED has 'color' property
              # It accepts (r,g,b) or (r,g,b,w)
+             print("RGB Sport")
              try:
                  dev.color = rgb_color
-             except:
-                 pass
+             except Exception as e:
+                 print(e)
         
         # Fallback for generic RGB setters
         elif hasattr(dev, "r") and hasattr(dev, "g") and hasattr(dev, "b"):
              dev.r = r
              dev.g = g
              dev.b = b
+        else:
+            print("Could not find the device", dev)
+            
+    print("\n \n \n")

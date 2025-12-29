@@ -34,6 +34,8 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
                         help='Enable cheat-protected console commands (disabled by default)')
     parser.add_argument('--start-server', action='store_true',
                         help='Start the script upload server (disabled by default)')
+    parser.add_argument('--unrestricted', action='store_true',
+                        help='Run all scripts in unrestricted mode')
     return parser.parse_known_args()
 
 
@@ -66,7 +68,7 @@ def main():
     for path in args.pythonpath:
         sys.path.append(path)
 
-    api.load_scripts(args.load_scripts)
+    api.load_scripts(args.load_scripts, force_unrestricted = args.unrestricted)
 
     if args.start_server:
         server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8000, log_config=None))
