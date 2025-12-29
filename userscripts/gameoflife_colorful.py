@@ -63,8 +63,10 @@ COLOR_CLASSIC_ALIVE = (50, 50, 80)
 # --- Helpers ---
 
 def clamp(val, min_v, max_v):
-    if val < min_v: return min_v
-    if val > max_v: return max_v
+    if val < min_v:
+        return min_v
+    if val > max_v:
+        return max_v
     return val
 
 def get_poti_val(dev_name) -> float:
@@ -74,8 +76,11 @@ def get_poti_val(dev_name) -> float:
         logger.warning(f"Device {dev_name} not found, returning 0.0")
         return 0.0
     val = dev.value
+    logger.debug(f"[Poti] Polling: {dev_name} {val}")
+    
     # Safe check for raw int values without 'max' built-in
-    if val > 1.0: val = val / 4095.0
+    if val > 1.0:
+        val = val / 4095.0
     return clamp(val, 0.0, 1.0)
 
 def spawn_color():

@@ -78,16 +78,14 @@ def loop():
         # --- Axes (Pan/Tilt) ---
         x_val = joystick.get_axis(AXIS_PAN)
         y_val = joystick.get_axis(AXIS_TILT)
+        logger.debug(f"[Joystick] Polling: {joystick.get_name()} {x_val} {y_val}")
         
         # Deadzone & Exponential Curve
-        x_v = x_val * x_val
-        if x_val < 0: x_v = -x_v
+        x_v = x_val **3
+        y_v = y_val **3
         
-        y_v = y_val * y_val
-        if y_val < 0: y_v = -y_v
-        
-        phi = -x_v * MAX_PHI  # Inverted X
-        theta = -y_v * MAX_THETA # Inverted Y
+        phi = x_v * MAX_PHI  # Inverted X
+        theta = y_v * MAX_THETA # Inverted Y
 
         # --- Buttons ---
         curr_trigger = joystick.get_button(BTN_TRIGGER)
@@ -103,8 +101,11 @@ def loop():
         # Apply to ALL moving heads
         for head_name in MOVING_HEADS:
             dev = api.get_device(head_name)
-            if not dev: continue
+            if not dev:
+                logger.debug(f"Device not found: {head_name}")
+                continue
             
+            logger.debug(f"Found device: {head_name}")
             # Map API to Device
             if hasattr(dev, "set_color"):
                 dev.set_color(color)

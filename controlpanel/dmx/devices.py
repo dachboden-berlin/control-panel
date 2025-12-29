@@ -294,13 +294,13 @@ class HydroBeamX12(DMXDevice):
         self._tilt: float = 255//2
         self._tilt_fine: float = 255//2
         self._color_wheel: int = 0
-        self._static_gobo: int = 4
+        self._static_gobo: int = 0
         self._prism1: int = 128
         self._prism1_rot: int = 0
         self._prism2: int = 128
-        self._prism2_rot: int = 10
+        self._prism2_rot: int = 0
         self._strobe: int = 32
-        self._dimmer: float = .5
+        self._dimmer: float = 1.0
         self._dimmer_fine: float = 0.0
         self._focus: float = 0.0
         self._focus_fine: float = 0.0
