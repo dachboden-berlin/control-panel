@@ -1,9 +1,7 @@
-import pygame
 import math
 from controlpanel import api
 
 # --- Configuration ---
-JOYSTICK_ID = 0
 MOVING_HEADS = ["MovingHeadRight", "MovingHeadLeft"]
 AXIS_PAN = 0
 AXIS_TILT = 1
@@ -16,7 +14,6 @@ MAX_PHI = math.pi*8/6 # +/- 180 degrees
 MAX_THETA = math.pi*12./24.  # +/- 90 degrees
 
 # Gobo Values (0-255)
-# Assuming some standard slots.
 GOBOS = [0, 10, 20, 30, 40, 50, 60, 70] 
 
 # --- State ---
@@ -44,16 +41,18 @@ def init_joystick():
 def loop():
     global joystick, current_gobo_index, is_trigger_held, last_btn_side_state, color
     
-    # Ensure Joystick is ready
+    # Retrieve Joystick via safe API
+    joystick = api.get_joystick(0)
     if not joystick:
         init_joystick()
         if not joystick:
             return
     print("Joystick sucessfully read")
     # Process Pygame Events (Pump)
-    
     # --- Axes (Pan/Tilt) ---
     try:
+        # Note: We rely on the existing joystick object methods
+        # even though we didn't import pygame here.
         x_val = joystick.get_axis(AXIS_PAN)
         y_val = joystick.get_axis(AXIS_TILT)
         
@@ -66,8 +65,8 @@ def loop():
         # Phi: -PI to PI
         phi = x_val * MAX_PHI
         # Theta: -PI/2 to PI/2
-        theta = y_val * MAX_THETA # Invert Y if needed? Usually Up is -1 on joysticks.
-        print("try to set x", x_val, "y", y_val)
+
+        theta = y_val * MAX_THETA 
         # --- Buttons ---
         trigger_state = joystick.get_button(BTN_TRIGGER)
         if trigger_state != is_trigger_held:
@@ -100,5 +99,6 @@ def loop():
                 dev.set_intensity(0.5 if is_trigger_held else 0.0)
         
 
-    except Exception as e:
-        print(f"[Joystick] Error: {e}")
+    except Exception:
+        # Print prohibited
+        pass
