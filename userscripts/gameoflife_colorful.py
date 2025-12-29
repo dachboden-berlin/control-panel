@@ -101,15 +101,15 @@ def spawn_color():
 
 # --- Input Handlers ---
 
-@api.callback(source="MultiButton01")
+@api.callback(source="MultiButton02")
 def set_mode_1(event):
     if event.value: set_mode(Mode.CLASSIC)
 
-@api.callback(source="MultiButton02")
+@api.callback(source="MultiButton03")
 def set_mode_2(event):
     if event.value: set_mode(Mode.ADJUSTABLE)
 
-@api.callback(source="MultiButton03")
+@api.callback(source="MultiButton01")
 def set_mode_3(event):
     if event.value: set_mode(Mode.RANDOM)
 
@@ -164,9 +164,9 @@ def loop():
     now = time.time()
     
     # 1. Read Inputs
-    speed_val = get_poti_val("Poti1")
-    color_val = get_poti_val("Poti2")
-    intensity_val = get_poti_val("Poti3")
+    speed_val = get_poti_val("Poti3")
+    color_val = get_poti_val("Poti1")
+    intensity_val = get_poti_val("Poti2")
     intensity_val = intensity_val*0.9 + 0.1
     # 2. Simulation Step
     # Decoupled from Frame Rate. Only runs when time is right.

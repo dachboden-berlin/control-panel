@@ -77,10 +77,13 @@ def set_digital(dev_name, value):
 
 def get_normalized_poti(name):
     dev = api.get_device(name)
-    if not dev: return 0.0
+    if not dev:
+        logger.warning(f"Device {name} not found")
+        return 0.0
     val = dev.value
     # Heuristic normalization if raw ADC is usually 4095
-    if val > 1.0: val /= 4095.0
+    if val > 1.0:
+        val /= 4095.0
     return max(0.0, min(1.0, val))
 
 @api.call_with_frequency(20)

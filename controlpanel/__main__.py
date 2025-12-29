@@ -49,7 +49,6 @@ def main():
     api.logger.set_log_level(args.log_level)
 
     artnet = ArtNet()  # This is where we initialise our one and ONLY ArtNet instance for the entire program.
-
     api.services.artnet = artnet
 
     event_manager = api.EventManager(artnet)
