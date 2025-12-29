@@ -95,8 +95,8 @@ class FallbackGame(BaseGame):
     def __init__(self):
         super().__init__("Fallback Game", resolution=(960, 540))
         self.error_color_index: int = 0
-        self.error_velocity: pg.Vector2 = pg.Vector2(150, 150)
-        self.error_text = "No game script loaded. Use --load-scripts [...] to load scripts"
+        self.error_velocity: pg.Vector2 = pg.Vector2(50, 50)
+        self.error_text = "Dear CCC, feel free to uncover the mysteries this panel has to offer."
         self.error_surf = self._get_error_surf()
         self.error_position: pg.Vector2 = (pg.Vector2(self.screen.get_rect().center) -
                                            pg.Vector2(self.error_surf.get_rect().center))

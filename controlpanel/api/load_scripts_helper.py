@@ -13,6 +13,7 @@ ALLOWED_MODULES = {
     'time': __import__('time'),
     'random': __import__('random'),
     'enum': __import__('enum'),
+    'logging': __import__('logging'),
     'controlpanel': controlpanel_fake,
     'controlpanel.api': api,
 }

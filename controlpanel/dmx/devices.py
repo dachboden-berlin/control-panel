@@ -295,9 +295,9 @@ class HydroBeamX12(DMXDevice):
         self._tilt_fine: float = 255//2
         self._color_wheel: int = 0
         self._static_gobo: int = 0
-        self._prism1: int = 0
+        self._prism1: int = 128
         self._prism1_rot: int = 0
-        self._prism2: int = 0
+        self._prism2: int = 128
         self._prism2_rot: int = 0
         self._strobe: int = 32
         self._dimmer: float = 1.0
@@ -321,6 +321,9 @@ class HydroBeamX12(DMXDevice):
         assert 0.0 <= x <= 1.0
         n = int(round(x * 65535))
         return (n >> 8) & 0xFF, n & 0xFF
+    
+    def set_gobo(self, value: int):
+        self._static_gobo = max(0, min(255, value))
 
     def set_color(self, color: COLOR | int) -> None:
         self._color_wheel = color
