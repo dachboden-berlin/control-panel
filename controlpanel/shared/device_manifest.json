@@ -1,9 +1,13 @@
 {
   "bvgpanel": {
-    "spi": null,
+    "spi": {
+      "mosi": 13,
+      "miso": 18,
+      "sck": 19
+    },
     "i2c": null,
     "devices": {
-      "AuthorizationKey2": ["Button", {"pin": 12}, {}]
+      "BVGPanelKeys": ["PisoShiftRegister", {"latch": 5, "count": 7, "polling_rate_hz": 10}, {}]
     }
   },
   "chronometer":
