@@ -6,7 +6,7 @@ temperature = 20
 
 
 def update_temperature():
-    api.get_device("Temperature").duty = temperature
+    api.get_device("Temperature").duty = temperature / 100
 
 
 def increase_temperature():
