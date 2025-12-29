@@ -60,19 +60,18 @@ def on_switch_event(event):
                     
                     # Apply Digital States Immediately
                     if key == "fog":
-                        set_digital("FogMachine", state_val)
+                        if state_val:
+                            api.get_device("FogMachine").turn_on()
+                        else:
+                            api.get_device("FogMachine").turn_off()
                     elif key == "plasma":
-                        set_digital("Plasmakugel", state_val)
+                        if state_val:
+                            api.get_device("Plasmakugel").turn_on()
+                        else:
+                            api.get_device("Plasmakugel").turn_off()
                     # Spots are handled in loop for Color, 
                     # but we could force an update for responsiveness if we wanted.
                     
-def set_digital(dev_name, value):
-    dev = api.get_device(dev_name)
-    if dev:
-        dev.set_value(value)
-    else:
-        logger.warning(f"Device {dev_name} not found")
-
 # --- Main Loop ---
 
 def get_normalized_poti(name):
@@ -86,7 +85,7 @@ def get_normalized_poti(name):
         val /= 4095.0
     return max(0.0, min(1.0, val))
 
-@api.call_with_frequency(20)
+@api.call_with_frequency(1)
 def loop():
     # 1. Calculate Common Color from Potis
     hue = get_normalized_poti("PotiLeft")

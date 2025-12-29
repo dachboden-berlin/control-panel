@@ -164,10 +164,10 @@ def loop():
     now = time.time()
     
     # 1. Read Inputs
-    speed_val = get_poti_val("Poti3")
-    color_val = get_poti_val("Poti1")
-    intensity_val = get_poti_val("Poti2")
-    intensity_val = intensity_val*0.9 + 0.1
+    speed_val = get_poti_val("Poti2")
+    color_val = get_poti_val("Poti3")
+    intensity_val = get_poti_val("Poti1")
+    intensity_val = intensity_val*0.7 + 0.3
     # 2. Simulation Step
     # Decoupled from Frame Rate. Only runs when time is right.
     # We use a custom update_delay based on poti.
