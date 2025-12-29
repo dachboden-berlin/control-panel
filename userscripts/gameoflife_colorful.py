@@ -3,7 +3,6 @@ from controlpanel import api
 import random
 import time
 import colorsys
-import logging
 from controlpanel.api.logger import get_logger
 
 # --- Logging Setup ---
@@ -13,7 +12,18 @@ logger.info("Initializing Game of Life Script")
 
 # --- Logic & Optimization ---
 
+
+# Pre-define Palette for Classic Mode (r, g, b)
+# Dies: 0, 1, 4, 5, 6, 7, 8
+# Survives: 2, 3
+COLOR_DIE_LOW = (255, 0, 0)      # Red for 0
+COLOR_DIE_1   = (255, 80, 0)     # Orange-ish for 1
+COLOR_SURVIVE_2 = (0, 255, 0)    # Green
+COLOR_SURVIVE_3 = (0, 255, 100)  # Brighter Green/Teal-ish
+COLOR_DIE_OVERCROWD = (200, 0, 0)# Darker Red for 4+
+
 SIZE = WIDTH * HEIGHT
+
 logger.debug(f"Grid Size: {WIDTH}x{HEIGHT} = {SIZE} cells")
 
 # Pre-calculate neighbors (flattened indices)
@@ -48,9 +58,9 @@ MAX_DELAY = 0.5
 
 # --- Modes ---
 class Mode:
-    CLASSIC = 1    # BW + Speed
+    RANDOM = 1     # Random Color + Speed
     ADJUSTABLE = 2 # HSV Color + Speed
-    RANDOM = 3     # Random Color + Speed
+    CLASSIC = 3    # BW + Speed
     FROZEN = 4     # No updates + Edit only
 
 current_mode = Mode.CLASSIC
@@ -58,7 +68,7 @@ last_sim_time = 0.0
 
 # --- Colors ---
 COLOR_OFF = (0, 0, 0)
-COLOR_CLASSIC_ALIVE = (50, 50, 80)
+
 
 # --- Helpers ---
 
@@ -154,9 +164,10 @@ def loop():
     now = time.time()
     
     # 1. Read Inputs
-    speed_val = get_poti_val("PotiLeft")
-    color_val = get_poti_val("PotiRight")
-    
+    speed_val = get_poti_val("Poti1")
+    color_val = get_poti_val("Poti2")
+    intensity_val = get_poti_val("Poti3")
+    intensity_val = intensity_val*0.9 + 0.1
     # 2. Simulation Step
     # Decoupled from Frame Rate. Only runs when time is right.
     # We use a custom update_delay based on poti.
@@ -199,21 +210,24 @@ def loop():
         
     # 2b. Update Seven Segment Display (Info Layer)
     # Format: L=<val> R=<val> (approx 8 chars each)
-    segment_display = api.get_device("SevenSegmentDisplay")
-    if segment_display:
-        # Left Poti (Color/Mode)
-        # Right Poti (Speed)
-        # 8 chars per side.
-        # Format: "L 0.123 " (8 chars)
-        # "R 0.456 " (8 chars)
-        
-        l_str = f"S {speed_val:.3f} ".ljust(8)
-        r_str = f"C {color_val:.3f} ".ljust(8)
-        full_text = l_str + r_str
-        
-        # Only update if text changes to keep DMX traffic sane? 
-        # But display_text is efficient enough.
-        segment_display.display_text(full_text)
+    if False:
+        # Seven Segment Display is disabled as we switched from
+        # Poti Left/Right to Poti 1 / 2 / 3
+        segment_display = api.get_device("SevenSegmentDisplay")
+        if segment_display:
+            # Left Poti (Color/Mode)
+            # Right Poti (Speed)
+            # 8 chars per side.
+            # Format: "L 0.123 " (8 chars)
+            # "R 0.456 " (8 chars)
+            
+            l_str = f"S {speed_val:.3f} ".ljust(8)
+            r_str = f"C {color_val:.3f} ".ljust(8)
+            full_text = l_str + r_str
+            
+            # Only update if text changes to keep DMX traffic sane? 
+            # But display_text is efficient enough.
+            segment_display.display_text(full_text)
 
     # 3. Render Step (Always run at 30Hz)
     # Re-build PIXEL_DATA every frame based on authoritative BOARD state.
@@ -227,7 +241,32 @@ def loop():
     for i in range(SIZE):
         if BOARD[i] == 1:
             if current_mode == Mode.CLASSIC:
-                color = COLOR_CLASSIC_ALIVE
+                # Dynamic Coloring based on neighbors
+                # Recalculate neighbors for 'live' view of safety
+                n_count = 0
+                for neighbor_idx in NEIGHBORS[i]:
+                    if BOARD[neighbor_idx] == 1:
+                        n_count += 1
+                
+                # Determine base color
+                if n_count == 2:
+                    base_c = COLOR_SURVIVE_2
+                elif n_count == 3:
+                    base_c = COLOR_SURVIVE_3
+                elif n_count == 0:
+                    base_c = COLOR_DIE_LOW
+                elif n_count == 1:
+                    base_c = COLOR_DIE_1
+                else:
+                    # 4, 5, 6, 7, 8
+                    base_c = COLOR_DIE_OVERCROWD
+                
+                
+                r = int(base_c[0] * intensity_val)
+                g = int(base_c[1] * intensity_val)
+                b = int(base_c[2] * intensity_val)
+                color = (r, g, b)
+
             elif current_mode == Mode.ADJUSTABLE:
                 color = mode2_color
             elif current_mode == Mode.RANDOM:
