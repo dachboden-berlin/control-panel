@@ -52,11 +52,10 @@ def update_voltmeter():
 def update_led_ring():
     if is_battery_inserted and battery_capacity > 0.3:
         if int(time.time()) % 2 == 0:
-            api.get_device("BatteryPortLightPanel").color = (0, 255, 255)
+            api.get_device("BatteryPortLightPanel").color = (0, 255, 0)
         else:
             api.get_device("BatteryPortLightPanel").color = (0, 0, 0)
             api.get_device("BatteryPortLightPanel").blackout()
-            api.get_device("")
 
 
 def update_cell():
