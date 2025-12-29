@@ -36,13 +36,20 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
                         help='Start the script upload server (disabled by default)')
     parser.add_argument('--unrestricted', action='store_true',
                         help='Run all scripts in unrestricted mode')
+    parser.add_argument('--log-level', type=str, default='INFO',
+                        help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default: INFO')
     return parser.parse_known_args()
+
 
 
 def main():
     args, unknown_args = parse_args()
+    
+    # Set log level immediately
+    api.logger.set_log_level(args.log_level)
 
     artnet = ArtNet()  # This is where we initialise our one and ONLY ArtNet instance for the entire program.
+
     api.services.artnet = artnet
 
     event_manager = api.EventManager(artnet)
