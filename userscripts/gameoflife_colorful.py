@@ -149,8 +149,8 @@ def loop():
     now = time.time()
     
     # 1. Read Inputs
-    speed_val = get_poti_val("PotiRight")
-    color_val = get_poti_val("PotiLeft")
+    speed_val = get_poti_val("PotiLeft")
+    color_val = get_poti_val("PotiRight")
     
     # 2. Simulation Step
     # Decoupled from Frame Rate. Only runs when time is right.
@@ -202,8 +202,8 @@ def loop():
         # Format: "L 0.123 " (8 chars)
         # "R 0.456 " (8 chars)
         
-        l_str = f"C {color_val:.3f} ".ljust(8)
-        r_str = f"S {speed_val:.3f} ".ljust(8)
+        l_str = f"S {speed_val:.3f} ".ljust(8)
+        r_str = f"C {color_val:.3f} ".ljust(8)
         full_text = l_str + r_str
         
         # Only update if text changes to keep DMX traffic sane? 

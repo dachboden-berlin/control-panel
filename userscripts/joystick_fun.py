@@ -44,54 +44,32 @@ color = COLORS[0]
 joystick = None
 logger = get_logger("JoystickFun")
 
-def get_joystick(index: int = 0) -> Joystick | None:
-    """
-    Get the Nth connected joystick, wrapped in a safe Joystick object.
-    :param index: The index of the joystick (default 0 for the first one).
-    :return: Joystick object or None if not found or GameManager not initialized.
-    """
-    if services.game_manager is None:
-        return None
-    
-    # helper to access private _joysticks safely
-    joysticks = getattr(services.game_manager, "_joysticks", {})
-    if not joysticks:
-        return None
-        
-    try:
-        # Return the Nth joystick connected
-        raw_joystick = list(joysticks.values())[index]
-        return Joystick(raw_joystick)
-    except IndexError:
-        return None
+
 
 def init_joystick():
     global joystick
-    # Try indices 0 to 9 to find any joystick
-    for i in range(10):
+    if pygame.joystick.get_count() > JOYSTICK_ID:
         try:
-             if pygame.joystick.get_count() > i:
-                 joystick = pygame.joystick.Joystick(i)
-                 joystick.init()
-                 logger.info(f"Initialized joystick {i}: {joystick.get_name()}")
-                 break
+            joystick = pygame.joystick.Joystick(JOYSTICK_ID)
+            joystick.init()
+            logger.info(f"[Joystick] Initialized: {joystick.get_name()}")
         except Exception as e:
-            logger.debug(f"Failed to check joystick {i}: {e}")
+            logger.error(f"[Joystick] Failed to init: {e}")
+    else:
+        logger.info("No joystick found.") 
+        pass
+
 
 @api.call_with_frequency(10)
 def loop():
     global joystick, color_idx, trigger_held, color
     
-    # Retrieve Joystick via safe API
-    joystick = get_joystick(0)
+    # Ensure Joystick is ready
     if not joystick:
-        if pygame.joystick.get_count() > 0:
-             try:
-                 j = pygame.joystick.Joystick(0)
-                 j.init()
-             except:
-                 pass
-        return
+        init_joystick()
+        if not joystick:
+            return
+
 
     # Process Events logic is handled by backend game loop usually.
     # We just poll state.
