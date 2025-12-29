@@ -192,6 +192,24 @@ def loop():
             
         logger.debug(f"Sim Step: {alive_count} alive cells, Delay: {update_delay:.3f}s")
         
+    # 2b. Update Seven Segment Display (Info Layer)
+    # Format: L=<val> R=<val> (approx 8 chars each)
+    segment_display = api.get_device("SevenSegmentDisplay")
+    if segment_display:
+        # Left Poti (Color/Mode)
+        # Right Poti (Speed)
+        # 8 chars per side.
+        # Format: "L 0.123 " (8 chars)
+        # "R 0.456 " (8 chars)
+        
+        l_str = f"C {color_val:.3f} ".ljust(8)
+        r_str = f"S {speed_val:.3f} ".ljust(8)
+        full_text = l_str + r_str
+        
+        # Only update if text changes to keep DMX traffic sane? 
+        # But display_text is efficient enough.
+        segment_display.display_text(full_text)
+
     # 3. Render Step (Always run at 30Hz)
     # Re-build PIXEL_DATA every frame based on authoritative BOARD state.
     # This ensures "button press visibility" is max 33ms latency.
