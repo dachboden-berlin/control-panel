@@ -18,21 +18,21 @@ MAX_THETA = math.pi*12./24.
 
 # Colors from Enum
 COLORS = [
-    HydroBeamX12.COLOR.WHITE,
-    HydroBeamX12.COLOR.RED,
-    HydroBeamX12.COLOR.ORANGE,
-    HydroBeamX12.COLOR.AQUAMARINE,
-    HydroBeamX12.COLOR.GREEN,
-    HydroBeamX12.COLOR.LIGHT_GREEN,
-    HydroBeamX12.COLOR.LAVENDER,
-    HydroBeamX12.COLOR.PINK,
-    HydroBeamX12.COLOR.LIGHT_YELLOW,
-    HydroBeamX12.COLOR.MAGENTA,
-    HydroBeamX12.COLOR.CYAN,
-    HydroBeamX12.COLOR.YELLOW,
-    HydroBeamX12.COLOR.WHITE_WARM,
-    HydroBeamX12.COLOR.WHITE_COOL,
-    HydroBeamX12.COLOR.UV
+    0, # White
+    4, # Read
+    8, #Orange
+    12, #Aqua
+    16, #Green
+    20, #Light Green
+    24, #Lavender
+    28, #Pink
+    32, #Light Yellow
+    36, #Magenta
+    40, #Cyan
+    44, #Yellow
+    48, #White Warm
+    52, #White Cool
+    56, #UV
 ]
 
 # --- State ---
@@ -78,7 +78,7 @@ def loop():
         # --- Axes (Pan/Tilt) ---
         x_val = joystick.get_axis(AXIS_PAN)
         y_val = joystick.get_axis(AXIS_TILT)
-        logger.debug(f"[Joystick] Polling: {joystick.get_name()} {x_val} {y_val}")
+        logger.debug(f"[Joystick] Polling: {x_val} {y_val}")
         
         # Deadzone & Exponential Curve
         x_v = x_val **3
@@ -106,6 +106,10 @@ def loop():
                 continue
             
             logger.debug(f"Found device: {head_name}")
+            logger.debug(f"Color: {color}")
+            logger.debug(f"Phi: {phi}")
+            logger.debug(f"Theta: {theta}")
+            logger.debug(f"Intensity: {trigger_held}")
             # Map API to Device
             if hasattr(dev, "set_color"):
                 dev.set_color(color)
