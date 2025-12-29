@@ -16,6 +16,7 @@ from controlpanel.api.dummy.esp32 import ESP32
 from anaconsole import console_command
 from controlpanel import api
 from controlpanel import dmx
+from anaconsole import Autocomplete
 from .commons import (
     Event,
     Condition,
@@ -339,6 +340,52 @@ class EventManager:
             except StopIteration:
                 print(f"{name_or_ip} is neither a valid IPv4 address nor the name of a registered ArtNet node")
                 return None
+
+    def _sensor_autocomplete(self, text: str) -> tuple[int, list[Autocomplete.Option]]:
+        return 0, [Autocomplete.Option(sensor, "") for sensor in self._sensor_dict.keys() if sensor.startswith(text)]
+
+    def _mute_autocomplete(self, text: str) -> tuple[int, list[Autocomplete.Option]]:
+        return 0, [Autocomplete.Option(sensor.name, "") for sensor in self._sensor_dict.values() if sensor.name.startswith(text) and not sensor.muted]
+
+    @console_command(is_cheat_protected=True, autocomplete_function=_mute_autocomplete)
+    def mute(self, sensor_to_mute: str):
+        """Mute the specified sensor. Packets from muted sensors are ignored."""
+        sensor = self._sensor_dict.get(sensor_to_mute)
+        if sensor is None:
+            print(f"Sensor '{sensor_to_mute}' is not a valid sensor.")
+            return
+        sensor._muted = True
+
+    @console_command(is_cheat_protected=True)
+    def mute_all(self):
+        for sensor in self._sensor_dict.values():
+            sensor._muted = True
+
+    def _unmute_autocomplete(self, text: str) -> tuple[int, list[Autocomplete.Option]]:
+        return 0, [Autocomplete.Option(sensor.name, "") for sensor in self._sensor_dict.values() if sensor.name.startswith(text) and sensor.muted]
+
+    @console_command(is_cheat_protected=True, autocomplete_function=_unmute_autocomplete)
+    def unmute(self, sensor_to_unmute: str):
+        """Unmute the specified sensor."""
+        sensor = self._sensor_dict.get(sensor_to_unmute)
+        if not sensor:
+            print(f"Sensor '{sensor_to_unmute}' is not a valid sensor.")
+            return
+        sensor._muted = False
+
+    @console_command(is_cheat_protected=True)
+    def unmute_all(self):
+        """Unmute all sensors."""
+        for sensor in self._sensor_dict.values():
+            sensor._muted = False
+
+    @console_command(is_cheat_protected=True, autocomplete_function=_sensor_autocomplete)
+    def solo(self, sensor_to_solo: str) -> None:
+        """Mute all sensors except the specified sensor."""
+        for sensor_name, sensor in self._sensor_dict.items():
+            if sensor_name == sensor_to_solo:
+                continue
+            sensor._muted = True
 
     @console_command(is_cheat_protected=True)
     def send_artcmd(self, cmd: str, name_or_ip: str | None = None) -> None:

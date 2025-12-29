@@ -11,11 +11,11 @@ WHITELIST_PATH = SCRIPT_DIR / "whitelist.txt"
 WHITELIST: set[str] = set(WHITELIST_PATH.read_text().splitlines())
 
 
-def load_script(name: str) -> types.ModuleType | None:
+def load_script(name: str, force_unrestricted: bool = False) -> types.ModuleType | None:
     from .load_scripts_helper import make_globals
 
-    whitelisted = name in WHITELIST
-    if whitelisted:
+    unrestricted = (name in WHITELIST) or force_unrestricted
+    if unrestricted:
         try:
             module = __import__(f"userscripts.{name}")
             print(f"Loaded {name}")
@@ -55,6 +55,6 @@ def load_script(name: str) -> types.ModuleType | None:
     return module
 
 
-def load_scripts(args: list[str]) -> None:
+def load_scripts(args: list[str], force_unrestricted: bool) -> None:
     for arg in args:
-        load_script(arg)
+        load_script(arg, force_unrestricted=force_unrestricted)
