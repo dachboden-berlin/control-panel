@@ -3,7 +3,6 @@ from controlpanel import api
 import random
 import time
 import colorsys
-import logging
 from controlpanel.api.logger import get_logger
 
 # --- Logging Setup ---
