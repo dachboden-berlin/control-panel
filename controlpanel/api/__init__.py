@@ -17,6 +17,9 @@ from controlpanel.game_manager.sound import play_sound
 from .callback import callback
 from .get_device import get_device
 from .event_manager import EventManager
+from . import logger
+
+
 
 if TYPE_CHECKING:
     from artnet import ArtNet

@@ -37,7 +37,7 @@ def on_battery_button_event(event: api.Event):
 
 
 def update_voltmeter():
-    if is_battery_inserted:
+    if not is_battery_inserted:
         api.get_device("Voltmeter1").duty = 0
         api.get_device("Voltmeter2").duty = 0
         api.get_device("Voltmeter3").duty = 0
@@ -52,11 +52,10 @@ def update_voltmeter():
 def update_led_ring():
     if is_battery_inserted and battery_capacity > 0.3:
         if int(time.time()) % 2 == 0:
-            api.get_device("BatteryPortLightPanel").color = (0, 255, 255)
+            api.get_device("BatteryPortLightPanel").color = (0, 255, 0)
         else:
             api.get_device("BatteryPortLightPanel").color = (0, 0, 0)
             api.get_device("BatteryPortLightPanel").blackout()
-            api.get_device("")
 
 
 def update_cell():
@@ -78,7 +77,7 @@ def update_cell():
         api.get_device("BatteriePWM").duty = battery_capacity
 
 
-@api.call_with_frequency(1)
+@api.call_with_frequency(10)
 def loop():
     update_voltmeter()
     update_led_ring()
