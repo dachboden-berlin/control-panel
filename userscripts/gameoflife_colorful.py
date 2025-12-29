@@ -3,10 +3,24 @@ from controlpanel import api
 import random
 import time
 import colorsys
+import logging
+
+# --- Logging Setup ---
+logger = logging.getLogger("GameOfLife")
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+# Prevent double logging if reloaded
+if logger.hasHandlers():
+    logger.handlers.clear()
+logger.addHandler(handler)
+
+logger.info("Initializing Game of Life Script")
 
 # --- Logic & Optimization ---
 
 SIZE = WIDTH * HEIGHT
+logger.debug(f"Grid Size: {WIDTH}x{HEIGHT} = {SIZE} cells")
 
 # Pre-calculate neighbors (flattened indices)
 NEIGHBORS = [[] for _ in range(SIZE)]
@@ -25,11 +39,14 @@ for x in range(WIDTH):
                 NEIGHBORS[idx].append(n_idx)
 
 # State: 0=Dead, 1=Alive
-BOARD = bytearray(SIZE)
+# Replaced bytearray with list for restricted env compatibility
+BOARD = [0] * SIZE 
+BOARD_NEXT = [0] * SIZE # Double buffer for simulation
+
 # Parallel array for Mode 3 colors (r, g, b tuples)
 BOARD_COLORS = [(120, 120, 120)] * SIZE 
 
-# Global Pixel Buffer to avoid re-allocation
+# Global Pixel Buffer
 PIXEL_DATA = [(0, 0, 0)] * SIZE
 
 MIN_DELAY = 0.03
@@ -43,8 +60,7 @@ class Mode:
     FROZEN = 4     # No updates + Edit only
 
 current_mode = Mode.CLASSIC
-last_update_time = 0.0
-last_color_val = -1.0 # Force update on first run
+last_sim_time = 0.0
 
 # --- Colors ---
 COLOR_OFF = (0, 0, 0)
@@ -52,13 +68,21 @@ COLOR_CLASSIC_ALIVE = (50, 50, 80)
 
 # --- Helpers ---
 
+def clamp(val, min_v, max_v):
+    if val < min_v: return min_v
+    if val > max_v: return max_v
+    return val
+
 def get_poti_val(dev_name) -> float:
     """Returns 0.0 to 1.0 from ADC value property."""
     dev = api.get_device(dev_name)
-    if not dev: return 0.0
+    if not dev: 
+        logger.warning(f"Device {dev_name} not found, returning 0.0")
+        return 0.0
     val = dev.value
+    # Safe check for raw int values without 'max' built-in
     if val > 1.0: val = val / 4095.0
-    return max(0.0, min(1.0, val))
+    return clamp(val, 0.0, 1.0)
 
 def spawn_color():
     # HSV: Random Hue, High Saturation, High Value
@@ -85,133 +109,120 @@ def set_mode_4(event):
     if event.value: set_mode(Mode.FROZEN)
 
 def set_mode(mode):
-    global current_mode, last_color_val
-    current_mode = mode
-    last_color_val = -1.0 # Force redraw
-    print(f"[GoL] Mode set to {mode}")
+    global current_mode
+    if current_mode != mode:
+        logger.info(f"[GoL] Mode changed from {current_mode} to {mode}")
+        current_mode = mode
+    else:
+        logger.debug(f"[GoL] Mode set to {mode} (no change)")
 
 
 @api.callback(source="MainframeKeys", action="ButtonsChanged")
 def toggle_cells(event):
-    global BOARD, last_color_val
+    global BOARD, BOARD_COLORS
+    changes = False
     for button_id, pressed in event.value:
         if pressed:
             x, y = button_pos(button_id)
             idx = y * WIDTH + x
             # Toggle state
-            if BOARD[idx]:
+            if BOARD[idx] == 1:
                 BOARD[idx] = 0
+                logger.debug(f"Cell ({x}, {y}) toggled DEAD")
             else:
                 BOARD[idx] = 1
                 BOARD_COLORS[idx] = spawn_color()
+                logger.debug(f"Cell ({x}, {y}) toggled ALIVE")
+            changes = True
     
-    # Force redraw in next loop frame to update LEDs
-    last_color_val = -1.0
-
+    # We do NOT force render here anymore.
+    # The main loop runs at 30Hz and will pick up the change immediately.
+    # This separates Input vs Render.
 
 @api.callback(source="DialReset")
 def reset():
-    global BOARD, PIXEL_DATA
+    global BOARD
+    logger.info("[GoL] Reset triggered")
     for i in range(SIZE):
         BOARD[i] = 0
-        PIXEL_DATA[i] = COLOR_OFF # Reset physical buffer too? 
-        # Note: PIXEL_DATA is indexed by Phys ID only if we fill it that way.
-        # But wait, LOGIC_TO_PHYS maps logic->phys.
-        # If we just clear PIXEL_DATA, it's fine since it covers all LEDs.
-    api.get_device("MainframeLEDs").set_pixels(PIXEL_DATA)
 
 # --- Loop ---
 
 @api.call_with_frequency(30)
 def loop():
-    global BOARD, last_update_time, last_color_val
+    global BOARD, BOARD_NEXT, last_sim_time
     
     now = time.time()
     
-    # 1. Read Controls
+    # 1. Read Inputs
     speed_val = get_poti_val("PotiRight")
     color_val = get_poti_val("PotiLeft")
     
+    # 2. Simulation Step
+    # Decoupled from Frame Rate. Only runs when time is right.
+    # We use a custom update_delay based on poti.
+    
     update_delay = MAX_DELAY - (speed_val * (MAX_DELAY - MIN_DELAY))
     
-    should_game_update = (now - last_update_time > update_delay) and (current_mode != Mode.FROZEN)
-    
-    # Check if we need to redraw all (Mode change or Color Poti change in Mode 2)
-    force_redraw = False
-    
-    # Check Color Poti change for Mode 2
-    if current_mode == Mode.ADJUSTABLE:
-        if abs(color_val - last_color_val) > 0.01:
-            force_redraw = True
-            last_color_val = color_val
-    elif last_color_val != -1.0:
-        # If we switched OUT of Mode 2 (or just init), we force redraw once
-        force_redraw = True
-        last_color_val = -1.0
-
-    # Determine Base Color for Mode 2
-    mode2_color = (120, 120, 120)
-    if current_mode == Mode.ADJUSTABLE:
-        r, g, b = colorsys.hsv_to_rgb(color_val, 1.0, 1.0)
-        mode2_color = (int(r*120), int(g*120), int(b*120))
-
-    # 2. Update & Render Layer
-    if should_game_update or force_redraw:
-        if should_game_update:
-            last_update_time = now
-            
-        changes_made = False # For set_pixels optimization if we wanted, but we usually push every frame
-                             # Actually `set_pixels` is cheap if data same?
-                             # But here we only modify PIXEL_DATA if needed.
-
-        # New board buffer (only needed if computing next generation)
-        # If just Redrawing (force_redraw) but no game update, we use current BOARD.
+    if current_mode != Mode.FROZEN and (now - last_sim_time > update_delay):
+        last_sim_time = now
         
-        sim_board = BOARD if not should_game_update else bytearray(SIZE)
-        
+        # Perform Simulation
+        # Using two lists: BOARD (current) -> BOARD_NEXT (future)
+        alive_count = 0
         for i in range(SIZE):
-            cell_prev = BOARD[i]
-            cell_new = cell_prev
+            cell_state = BOARD[i]
+            n = 0
+            for neighbor_idx in NEIGHBORS[i]:
+                if BOARD[neighbor_idx] == 1:
+                    n += 1
             
-            # Simulation Step
-            if should_game_update:
-                n = 0
-                for neighbor_idx in NEIGHBORS[i]:
-                    if BOARD[neighbor_idx]:
-                        n += 1
-                
-                if cell_prev:
-                    if n == 2 or n == 3: cell_new = 1
-                    else: cell_new = 0
+            if cell_state == 1:
+                if n == 2 or n == 3:
+                     BOARD_NEXT[i] = 1
                 else:
-                    if n == 3: 
-                        cell_new = 1
-                        # Mode 3 Color Persistence logic:
-                        # Should we generate new color? Yes.
-                        BOARD_COLORS[i] = spawn_color()
-                
-                sim_board[i] = cell_new
-
-            # Rendering Step (Merged)
-            # Update Pixel Data if:
-            # 1. State Changed (Dead <-> Alive)
-            # 2. Force Redraw is active (Mode/Color changed)
-            if (cell_new != cell_prev) or force_redraw:
-                phys_idx = LOGIC_TO_PHYS[i]
-                
-                if cell_new:
-                    if current_mode == Mode.CLASSIC:
-                        PIXEL_DATA[phys_idx] = COLOR_CLASSIC_ALIVE
-                    elif current_mode == Mode.ADJUSTABLE:
-                        PIXEL_DATA[phys_idx] = mode2_color
-                    elif current_mode == Mode.RANDOM:
-                        PIXEL_DATA[phys_idx] = BOARD_COLORS[i]
-                    elif current_mode == Mode.FROZEN:
-                        PIXEL_DATA[phys_idx] = (100, 100, 100)
+                     BOARD_NEXT[i] = 0
+            else:
+                if n == 3:
+                    BOARD_NEXT[i] = 1
+                    BOARD_COLORS[i] = spawn_color() # Generate new color for birth
                 else:
-                    PIXEL_DATA[phys_idx] = COLOR_OFF
-
-        if should_game_update:
-            BOARD = sim_board
+                    BOARD_NEXT[i] = 0
             
-        api.get_device("MainframeLEDs").set_pixels(PIXEL_DATA)
+            if BOARD_NEXT[i] == 1:
+                alive_count += 1
+                
+        # Swap buffers: Copy NEXT to CURRENT
+        for i in range(SIZE):
+            BOARD[i] = BOARD_NEXT[i]
+            
+        logger.debug(f"Sim Step: {alive_count} alive cells, Delay: {update_delay:.3f}s")
+        
+    # 3. Render Step (Always run at 30Hz)
+    # Re-build PIXEL_DATA every frame based on authoritative BOARD state.
+    # This ensures "button press visibility" is max 33ms latency.
+    
+    # Pre-calc Mode 2 color once per frame
+    mode2_h = color_val # 0-1
+    mode2_r, mode2_g, mode2_b = colorsys.hsv_to_rgb(mode2_h, 1.0, 1.0)
+    mode2_color = (int(mode2_r*120), int(mode2_g*120), int(mode2_b*120))
+    
+    for i in range(SIZE):
+        if BOARD[i] == 1:
+            if current_mode == Mode.CLASSIC:
+                color = COLOR_CLASSIC_ALIVE
+            elif current_mode == Mode.ADJUSTABLE:
+                color = mode2_color
+            elif current_mode == Mode.RANDOM:
+                color = BOARD_COLORS[i]
+            elif current_mode == Mode.FROZEN:
+                color = (100, 100, 100)
+            else:
+                 color = COLOR_OFF
+        else:
+            color = COLOR_OFF
+            
+        phys_idx = LOGIC_TO_PHYS[i]
+        PIXEL_DATA[phys_idx] = color
+        
+    api.get_device("MainframeLEDs").set_pixels(PIXEL_DATA)
