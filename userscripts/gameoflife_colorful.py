@@ -212,6 +212,8 @@ def loop():
     # 2b. Update Seven Segment Display (Info Layer)
     # Format: L=<val> R=<val> (approx 8 chars each)
     if False:
+        # Seven Segment Display is disabled as we switched from
+        # Poti Left/Right to Poti 1 / 2 / 3
         segment_display = api.get_device("SevenSegmentDisplay")
         if segment_display:
             # Left Poti (Color/Mode)
