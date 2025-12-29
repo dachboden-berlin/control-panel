@@ -6,6 +6,7 @@ import sys
 
 
 SCRIPT_DIR = pathlib.Path(__file__).parent.parent.parent / "userscripts"
+sys.path.append(str(SCRIPT_DIR))
 WHITELIST_PATH = SCRIPT_DIR / "whitelist.txt"
 WHITELIST: set[str] = set(WHITELIST_PATH.read_text().splitlines())
 
