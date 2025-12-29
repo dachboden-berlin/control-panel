@@ -1,5 +1,8 @@
 import math
 from controlpanel import api
+from controlpanel.dmx.devices import HydroBeamX12
+from controlpanel.api.logger import get_logger
+import pygame
 
 # --- Configuration ---
 MOVING_HEADS = ["MovingHeadRight", "MovingHeadLeft"]
@@ -7,87 +10,126 @@ AXIS_PAN = 0
 AXIS_TILT = 1
 BTN_TRIGGER = 0
 BTN_SIDE = 1
+JOYSTICK_ID = 0
 
 # Pan/Tilt Ranges (in radians)
-# Adjust these based on preference/safe limits
-MAX_PHI = math.pi*8/6 # +/- 180 degrees
-MAX_THETA = math.pi*12./24.  # +/- 90 degrees
+MAX_PHI = math.pi*8/6 
+MAX_THETA = math.pi*12./24.
 
-# Gobo Values (0-255)
-GOBOS = [0, 10, 20, 30, 40, 50, 60, 70] 
+# Colors from Enum
+COLORS = [
+    HydroBeamX12.COLOR.WHITE,
+    HydroBeamX12.COLOR.RED,
+    HydroBeamX12.COLOR.ORANGE,
+    HydroBeamX12.COLOR.AQUAMARINE,
+    HydroBeamX12.COLOR.GREEN,
+    HydroBeamX12.COLOR.LIGHT_GREEN,
+    HydroBeamX12.COLOR.LAVENDER,
+    HydroBeamX12.COLOR.PINK,
+    HydroBeamX12.COLOR.LIGHT_YELLOW,
+    HydroBeamX12.COLOR.MAGENTA,
+    HydroBeamX12.COLOR.CYAN,
+    HydroBeamX12.COLOR.YELLOW,
+    HydroBeamX12.COLOR.WHITE_WARM,
+    HydroBeamX12.COLOR.WHITE_COOL,
+    HydroBeamX12.COLOR.UV
+]
 
 # --- State ---
-current_gobo_index = 0
-is_trigger_held = False
-last_btn_side_state = False
-color = 10
+trigger_held = False
+color_idx = 0
+color = COLORS[0]
+
 # --- Setup ---
 joystick = None
+logger = get_logger("JoystickFun")
+
+def get_joystick(index: int = 0) -> Joystick | None:
+    """
+    Get the Nth connected joystick, wrapped in a safe Joystick object.
+    :param index: The index of the joystick (default 0 for the first one).
+    :return: Joystick object or None if not found or GameManager not initialized.
+    """
+    if services.game_manager is None:
+        return None
+    
+    # helper to access private _joysticks safely
+    joysticks = getattr(services.game_manager, "_joysticks", {})
+    if not joysticks:
+        return None
+        
+    try:
+        # Return the Nth joystick connected
+        raw_joystick = list(joysticks.values())[index]
+        return Joystick(raw_joystick)
+    except IndexError:
+        return None
 
 def init_joystick():
     global joystick
-    if pygame.joystick.get_count() > JOYSTICK_ID:
+    # Try indices 0 to 9 to find any joystick
+    for i in range(10):
         try:
-            joystick = pygame.joystick.Joystick(JOYSTICK_ID)
-            joystick.init()
-            print(f"[Joystick] Initialized: {joystick.get_name()}")
+             if pygame.joystick.get_count() > i:
+                 joystick = pygame.joystick.Joystick(i)
+                 joystick.init()
+                 logger.info(f"Initialized joystick {i}: {joystick.get_name()}")
+                 break
         except Exception as e:
-            print(f"[Joystick] Failed to init: {e}")
-    else:
-        # print("No joystick found.") 
-        pass
+            logger.debug(f"Failed to check joystick {i}: {e}")
 
 @api.call_with_frequency(10)
 def loop():
-    global joystick, current_gobo_index, is_trigger_held, last_btn_side_state, color
+    global joystick, color_idx, trigger_held, color
     
     # Retrieve Joystick via safe API
-    joystick = api.get_joystick(0)
+    joystick = get_joystick(0)
     if not joystick:
-        init_joystick()
-        if not joystick:
-            return
-    print("Joystick sucessfully read")
-    # Process Pygame Events (Pump)
-    # --- Axes (Pan/Tilt) ---
+        if pygame.joystick.get_count() > 0:
+             try:
+                 j = pygame.joystick.Joystick(0)
+                 j.init()
+             except:
+                 pass
+        return
+
+    # Process Events logic is handled by backend game loop usually.
+    # We just poll state.
+
     try:
-        # Note: We rely on the existing joystick object methods
-        # even though we didn't import pygame here.
+        # --- Axes (Pan/Tilt) ---
         x_val = joystick.get_axis(AXIS_PAN)
         y_val = joystick.get_axis(AXIS_TILT)
         
-        # Deadzone
-        #if abs(x_val) < 0.1: x_val = 0
-        #if abs(y_val) < 0.1: y_val = 0
-        x_val = -1*x_val **2 if x_val < 0 else -1*x_val **2
-        y_val = -1*y_val **2 if y_val < 0 else -1*y_val **2
-        # Map to device
-        # Phi: -PI to PI
-        phi = x_val * MAX_PHI
-        # Theta: -PI/2 to PI/2
+        # Deadzone & Exponential Curve
+        x_v = x_val * x_val
+        if x_val < 0: x_v = -x_v
+        
+        y_v = y_val * y_val
+        if y_val < 0: y_v = -y_v
+        
+        phi = -x_v * MAX_PHI  # Inverted X
+        theta = -y_v * MAX_THETA # Inverted Y
 
-        theta = y_val * MAX_THETA 
         # --- Buttons ---
-        trigger_state = joystick.get_button(BTN_TRIGGER)
-        if trigger_state != is_trigger_held:
-            is_trigger_held = trigger_state
-            color += 10
-            color = color % 120
-
-        # Side Button (Gobo Cycle) controls global state
-        side_state = joystick.get_button(BTN_SIDE)
+        curr_trigger = joystick.get_button(BTN_TRIGGER)
+        
+        # Detect Rising Edge for Color Cycle
+        if curr_trigger and not trigger_held:
+            color_idx = (color_idx + 1) % len(COLORS)
+            color = COLORS[color_idx]
+            logger.debug(f"Color cycled to: {color}")
             
-        last_btn_side_state = side_state
-
+        trigger_held = curr_trigger
+        
         # Apply to ALL moving heads
         for head_name in MOVING_HEADS:
             dev = api.get_device(head_name)
-            if not dev:
-                continue
-            else:
-                print("Device found ", dev)
+            if not dev: continue
             
-            dev.set_color(color)
+            # Map API to Device
+            if hasattr(dev, "set_color"):
+                dev.set_color(color)
             
             if hasattr(dev, "set_phi"):
                 dev.set_phi(phi)
@@ -96,9 +138,8 @@ def loop():
                 dev.set_theta(theta)
 
             if hasattr(dev, "set_intensity"):
-                dev.set_intensity(0.5 if is_trigger_held else 0.0)
-        
+                dev.set_intensity(1.0 if trigger_held else 0.0)
 
-    except Exception:
-        # Print prohibited
+    except Exception as e:
+        logger.error(f"Error in loop: {e}")
         pass

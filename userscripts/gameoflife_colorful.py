@@ -4,16 +4,10 @@ import random
 import time
 import colorsys
 import logging
+from controlpanel.api.logger import get_logger
 
 # --- Logging Setup ---
-logger = logging.getLogger("GameOfLife")
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-# Prevent double logging if reloaded
-if logger.hasHandlers():
-    logger.handlers.clear()
-logger.addHandler(handler)
+logger = get_logger("GameOfLife")
 
 logger.info("Initializing Game of Life Script")
 
