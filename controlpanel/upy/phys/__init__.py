@@ -1,6 +1,7 @@
 from .fixture import Fixture
 from .sensor import Sensor
 
+from .accelerometer import Accelerometer
 from .adc import ADC
 from .banana_plugs import BananaPlugs
 from .button import Button

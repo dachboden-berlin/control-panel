@@ -44,7 +44,10 @@
   "ladestation":
   {
     "spi": null,
-    "i2c": null,
+    "i2c": {
+      "scl": 22,
+      "sda": 21
+    },
     "devices": {
       "Voltmeter1": ["PWM", {"pin": 2}, {}],
       "Voltmeter2": ["PWM", {"pin": 4}, {}],
@@ -53,12 +56,13 @@
       "Batterie": ["PWM", {"pin": 19}, {}],
       "BatteryPortLightPanel": ["CompositePWM", {"pins": [27, 33, 25]}, {}],
       "AuthorizationKey1": ["Button", {"pin": 15}, {}],
-      "BatteryPortButtonPanel": ["Button", {"pin": 21, "invert": true}, {}],
+      "BatteryPortButtonPanel": ["Button", {"pin": 12, "invert": true}, {}],
       "AntonLED": ["PWM", {"pin": 14, "intensity": 0.0}, {}],
       "AntonSchalter": ["ADC", {"pin": 32}, {}],
       "HandbremseHall": ["ADC", {"pin": 34, "polling_rate_hz": 5}, {"rolling_average_size": 5, "map_range": [0.19, 0.47]}],
-      "HandbremseButton": ["Button", {"pin": 4}, {}]
-  }
+      "HandbremseButton": ["Button", {"pin": 18}, {}],
+      "HandbremseGyro": ["Accelerometer", {}, {}]
+    }
   },
   "mainframe": {
     "spi": {
@@ -101,18 +105,10 @@
       "PotiRight": ["ADC", {"pin":  35}, {}],
       "MultiButton01": ["Button", {"pin": 22, "polling_rate_hz": 1.0, "invert": true}, {}],
       "MultiButton02": ["Button", {"pin": 27, "polling_rate_hz": 1.0, "invert": true}, {}],
-      "MultiButton03": ["Button", {"pin": 25, "po3lling_rate_hz": 1.0, "invert": true}, {}],
+      "MultiButton03": ["Button", {"pin": 25, "polling_rate_hz": 1.0, "invert": true}, {}],
       "MultiButton04": ["Button", {"pin": 26, "polling_rate_hz": 1.0, "invert": true}, {}],
       "MicButton": ["Button", {"pin": 2, "polling_rate_hz": 1.0, "invert": true}, {}],
       "SevenSegmentDisplay": ["SevenSegmentDisplay", {"pin_chip_select": 19, "digit_count": 16}, {}]
-    }
-  },
-  "test":
-  {
-    "spi": null,
-    "i2c": null,
-    "devices": {
-      "Hall": ["ADC", {"pin": 32}, {}]
     }
   },
   "fourteensegment":
