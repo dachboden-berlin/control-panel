@@ -58,7 +58,7 @@
       "AntonSchalter": ["ADC", {"pin": 32}, {}],
       "HandbremseHall": ["ADC", {"pin": 34, "polling_rate_hz": 5}, {"rolling_average_size": 5, "map_range": [0.19, 0.47]}],
       "HandbremseButton": ["Button", {"pin": 4}, {}]
-    }
+  }
   },
   "mainframe": {
     "spi": {
@@ -101,7 +101,7 @@
       "PotiRight": ["ADC", {"pin":  35}, {}],
       "MultiButton01": ["Button", {"pin": 22, "polling_rate_hz": 1.0, "invert": true}, {}],
       "MultiButton02": ["Button", {"pin": 27, "polling_rate_hz": 1.0, "invert": true}, {}],
-      "MultiButton03": ["Button", {"pin": 25, "polling_rate_hz": 1.0, "invert": true}, {}],
+      "MultiButton03": ["Button", {"pin": 25, "po3lling_rate_hz": 1.0, "invert": true}, {}],
       "MultiButton04": ["Button", {"pin": 26, "polling_rate_hz": 1.0, "invert": true}, {}],
       "MicButton": ["Button", {"pin": 2, "polling_rate_hz": 1.0, "invert": true}, {}],
       "SevenSegmentDisplay": ["SevenSegmentDisplay", {"pin_chip_select": 19, "digit_count": 16}, {}]
@@ -153,7 +153,12 @@
       "PowerWrite2": ["DigitalPin", {"pin": 14}, {}],
       "Buchse1": ["Button", {"pin": 25}, {}],
       "Buchse2": ["Button", {"pin": 26}, {}],
-      "Buchse3": ["Button", {"pin": 27}, {}]
+      "Buchse3": ["Button", {"pin": 27}, {}],
+      "ConnectorOut": ["DigitalPin", {"pin": 15}, {}],
+      "Connector1a": ["Button", {"pin": 18}, {}],
+      "Connector1b": ["Button", {"pin": 19}, {}],
+      "Connector3a": ["Button", {"pin": 35}, {}],
+      "Connector3b": ["Button", {"pin": 34}, {}]
     }
   },
   "telegraph": {
