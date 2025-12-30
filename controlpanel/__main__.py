@@ -5,8 +5,6 @@ from controlpanel.game_manager import GameManager
 from controlpanel.dmx import DMXUniverse, DMXDevice
 from controlpanel import api
 import argparse
-from controlpanel.server import app
-import uvicorn
 
 
 def parse_args() -> tuple[argparse.Namespace, list[str]]:
@@ -27,9 +25,7 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument('--pythonpath', nargs='*', default=[],
                         help='Directories to add to PYTHONPATH (to import scripts (modules/packages) from')
     parser.add_argument('--load-scripts', nargs='*', default=[],
-                        help='Load script files (in controlpanel/scripts), all by default. '
-                             'Alternatively, supply the filenames of the script files (or presets) to load.'
-                             'A preset is a .txt file containing newline-separated script file names')
+                        help='Load the specified script files (in ./userscripts).')
     parser.add_argument('--cheats', '-c', action='store_true', default=False,
                         help='Enable cheat-protected console commands (disabled by default)')
     parser.add_argument('--start-server', action='store_true',
@@ -41,10 +37,9 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
     return parser.parse_known_args()
 
 
-
 def main():
     args, unknown_args = parse_args()
-    
+
     # Set log level immediately
     api.logger.set_log_level(args.log_level)
 
@@ -77,6 +72,8 @@ def main():
     api.load_scripts(args.load_scripts, force_unrestricted = args.unrestricted)
 
     if args.start_server:
+        from controlpanel.server import app
+        import uvicorn
         server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8000, log_config=None))
         Thread(target=server.run, daemon=True).start()
 
