@@ -11,17 +11,9 @@ WHITELIST_PATH = SCRIPT_DIR / "whitelist.txt"
 WHITELIST: set[str] = set(WHITELIST_PATH.read_text().splitlines())
 
 
-def load_script(name: str, force_unrestricted: bool = False) -> types.ModuleType | None:
+def load_script_restricted(name) -> types.ModuleType | None:
     from .load_scripts_helper import make_globals
 
-    unrestricted = (name in WHITELIST) or force_unrestricted
-    if unrestricted:
-        try:
-            module = __import__(f"userscripts.{name}")
-            print(f"Loaded {name}")
-            return module
-        except ImportError:
-            pass
 
     script_path = (SCRIPT_DIR / name).with_suffix(".py")
     if not script_path.is_file():
@@ -43,16 +35,33 @@ def load_script(name: str, force_unrestricted: bool = False) -> types.ModuleType
     module.__dict__.update(make_globals())
     module.__dict__["__name__"] = module_name
 
-    if name in WHITELIST:
-        exec(bytecode)
-    else:
-        exec(bytecode, module.__dict__, module.__dict__)
+    exec(bytecode, module.__dict__, module.__dict__)
 
     sys.modules[module_name] = module
     controlpanel.api.services.loaded_scripts[module_name] = module
 
     print(f"Loaded {name}")
     return module
+
+
+def load_script_unrestricted(name) -> types.ModuleType | None:
+    try:
+        module = __import__(f"userscripts.{name}")
+        print(f"Loaded {name}")
+        return module
+    except ImportError as e:
+        print(e)
+        return None
+
+
+def load_script(name: str, force_unrestricted: bool = False) -> types.ModuleType | None:
+    unrestricted = (name in WHITELIST) or force_unrestricted
+
+    if unrestricted:
+        return load_script_unrestricted(name)
+    else:
+        return load_script_restricted(name)
+
 
 
 def load_scripts(args: list[str], force_unrestricted: bool) -> None:
