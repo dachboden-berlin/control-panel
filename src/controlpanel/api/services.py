@@ -14,7 +14,6 @@ class Services:
         self.event_manager: Optional[EventManager] = None
         self.game_manager: Optional["GameManager"] = None
         self.dmx: Optional[DMXUniverse] = None
-        self.loaded_scripts: dict[str, types.ModuleType] = {}
 
 
 services = Services()

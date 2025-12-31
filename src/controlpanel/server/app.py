@@ -9,10 +9,10 @@ from controlpanel.linting.restricted_checker import RestrictedPythonChecker
 
 app = FastAPI()
 
-ROOT = Path(__file__).resolve().parents[2]
-STATIC_DIR = ROOT / "static"
-TEMPLATE_DIR = ROOT / "templates"
-UPLOAD_DIR = ROOT / "userscripts"
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+TEMPLATE_DIR = BASE_DIR / "templates"
+UPLOAD_DIR = Path("./userscripts")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

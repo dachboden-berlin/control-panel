@@ -1,4 +1,3 @@
-import sys
 from threading import Thread
 from artnet import ArtNet
 from controlpanel.game_manager import GameManager
@@ -22,16 +21,14 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
                         help='Enable shaders (shaders are disabled by default)')
     group.add_argument('--stretch-to-fit', action='store_true',
                        help='Stretch game to fit screen (black bars by default)')
-    parser.add_argument('--pythonpath', nargs='*', default=[],
-                        help='Directories to add to PYTHONPATH (to import scripts (modules/packages) from')
     parser.add_argument('--load-scripts', nargs='*', default=[],
-                        help='Load the specified script files (in ./userscripts).')
+                        help='Load the specified script files (in ./userscripts). Restricted mode by default.')
+    parser.add_argument('--unrestricted', action='store_true',
+                        help='Load all scripts in unrestricted mode.')
     parser.add_argument('--cheats', '-c', action='store_true', default=False,
                         help='Enable cheat-protected console commands (disabled by default)')
     parser.add_argument('--start-server', action='store_true',
                         help='Start the script upload server (disabled by default)')
-    parser.add_argument('--unrestricted', action='store_true',
-                        help='Run all scripts in unrestricted mode')
     parser.add_argument('--log-level', type=str, default='INFO',
                         help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default: INFO')
     return parser.parse_known_args()
@@ -43,7 +40,7 @@ def main():
     # Set log level immediately
     api.logger.set_log_level(args.log_level)
 
-    artnet = ArtNet()  # This is where we initialise our one and ONLY ArtNet instance for the entire program.
+    artnet = ArtNet()  # This is where we initialize our one and ONLY ArtNet instance for the entire program.
     api.services.artnet = artnet
 
     event_manager = api.EventManager(artnet)
@@ -66,16 +63,16 @@ def main():
         print('Unable to initiate DMX Universe because of value error.')  # occurred on macOS
         print(err)
 
-    for path in args.pythonpath:
-        sys.path.append(path)
-
-    api.load_scripts(args.load_scripts, force_unrestricted = args.unrestricted)
-
     if args.start_server:
-        from controlpanel.server import app
-        import uvicorn
-        server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8000, log_config=None))
-        Thread(target=server.run, daemon=True).start()
+        try:
+            from controlpanel.server import app
+            import uvicorn
+            server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8000, log_config=None))
+            Thread(target=server.run, daemon=True).start()
+        except ModuleNotFoundError:
+            print("Cannot start server because of missing optional [server] dependencies!")
+
+    api.load_scripts(args.load_scripts, args.unrestricted)
 
     game_manager_thread = Thread(target=game_manager.run, daemon=False)
     game_manager_thread.run()

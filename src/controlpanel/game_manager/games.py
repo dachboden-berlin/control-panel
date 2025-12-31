@@ -94,38 +94,38 @@ class FallbackGame(BaseGame):
 
     def __init__(self):
         super().__init__("Fallback Game", resolution=(960, 540))
-        self.error_color_index: int = 0
-        self.error_velocity: pg.Vector2 = pg.Vector2(50, 50)
-        self.error_text = "Dear CCC, feel free to uncover the mysteries this panel has to offer."
-        self.error_surf = self._get_error_surf()
-        self.error_position: pg.Vector2 = (pg.Vector2(self.screen.get_rect().center) -
-                                           pg.Vector2(self.error_surf.get_rect().center))
+        self.text_color_idx: int = 0
+        self.text_velocity: pg.Vector2 = pg.Vector2(50, 50)
+        self.text = "No GUI Script loaded. Use --no-gui to run headless."
+        self.text_surf = self._get_error_surf()
+        self.text_pos: pg.Vector2 = (pg.Vector2(self.screen.get_rect().center) -
+                                     pg.Vector2(self.text_surf.get_rect().center))
 
     def _get_error_surf(self) -> pg.Surface:
         return pg.font.Font(None, 36).render(
-            self.error_text,
-            True, self.COLORS[self.error_color_index], None)
+            self.text,
+            True, self.COLORS[self.text_color_idx], None)
 
     def update(self) -> None:
-        self.error_position += self.error_velocity * self.dt
+        self.text_pos += self.text_velocity * self.dt
         bounce_count = 0
-        if self.error_position.x + self.error_surf.get_width() > self.screen.get_width() or self.error_position.x < 0:
-            self.error_position.x = max(0, min(self.screen.get_width() - self.error_surf.get_width(), int(self.error_position.x)))
-            self.error_velocity.x *= -1
+        if self.text_pos.x + self.text_surf.get_width() > self.screen.get_width() or self.text_pos.x < 0:
+            self.text_pos.x = max(0, min(self.screen.get_width() - self.text_surf.get_width(), int(self.text_pos.x)))
+            self.text_velocity.x *= -1
             bounce_count += 1
-        if self.error_position.y + self.error_surf.get_height() > self.screen.get_height() or self.error_position.y < 0:
-            self.error_position.y = max(0, min(self.screen.get_height() - self.error_surf.get_height(), int(self.error_position.y)))
+        if self.text_pos.y + self.text_surf.get_height() > self.screen.get_height() or self.text_pos.y < 0:
+            self.text_pos.y = max(0, min(self.screen.get_height() - self.text_surf.get_height(), int(self.text_pos.y)))
             bounce_count += 1
-            self.error_velocity.y *= -1
+            self.text_velocity.y *= -1
         if bounce_count == 1:
-            self.error_color_index += 1
-            if self.error_color_index >= len(self.COLORS):
-                self.error_color_index = 0
+            self.text_color_idx += 1
+            if self.text_color_idx >= len(self.COLORS):
+                self.text_color_idx = 0
                 random.shuffle(self.COLORS)
-            self.error_surf = self._get_error_surf()
+            self.text_surf = self._get_error_surf()
         elif bounce_count == 2:
             print("pog")
 
     def render(self) -> None:
         self.screen.fill((0, 0, 0))
-        self.screen.blit(self.error_surf, self.error_position)
+        self.screen.blit(self.text_surf, self.text_pos)

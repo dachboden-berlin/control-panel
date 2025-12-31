@@ -1,6 +1,7 @@
+import sys
 import RestrictedPython.Eval
 from RestrictedPython import safe_builtins, utility_builtins, limited_builtins
-from typing import Any
+from typing import Any, Callable
 import types
 import controlpanel.api as api
 
@@ -23,8 +24,8 @@ def safe_import(name: str, globals=None, locals=None, fromlist=(), level=0):
     if name in ALLOWED_MODULES:
         return ALLOWED_MODULES[name]
 
-    if f"userscripts.{name}" in api.services.loaded_scripts:
-        return api.services.loaded_scripts[f"userscripts.{name}"]
+    if f"userscripts.{name}" in sys.modules:
+        return sys.modules[f"userscripts.{name}"]
 
     from .load_scripts import load_script
     try:
@@ -50,6 +51,15 @@ def safe_write(obj):
     return obj
 
 
+class PrintCollector:
+    def __init__(self, script_name: str):
+        self.script_name = script_name
+
+    def _call_print(self, text: str) -> str:
+        print(f"{self.script_name}: " + text)
+        return text
+
+
 def safe_inplacevar(op: str, a, b):
     if op == "+=":
         return a + b
@@ -64,7 +74,7 @@ def safe_inplacevar(op: str, a, b):
     raise ValueError(f"{op} is not a valid operation.")
 
 
-def make_globals() -> dict[str, Any]:
+def make_globals(script_name: str) -> dict[str, Any]:
     g = {}
 
     # Builtins
@@ -84,6 +94,7 @@ def make_globals() -> dict[str, Any]:
     g['_getiter_'] = RestrictedPython.Eval.default_guarded_getiter
     g['_iter_unpack_sequence_'] = RestrictedPython.Guards.guarded_iter_unpack_sequence
     g['_unpack_sequence_'] = RestrictedPython.Guards.guarded_unpack_sequence
+    g['_print_'] =  lambda x: PrintCollector(script_name)
     g['_write_'] = lambda x: x
     g['_inplacevar_'] = safe_inplacevar
     g['__import__'] = safe_import
