@@ -29,6 +29,8 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
                         help='Enable cheat-protected console commands (disabled by default)')
     parser.add_argument('--start-server', action='store_true',
                         help='Start the script upload server (disabled by default)')
+    parser.add_argument('--port',  type=int, default=8000,
+                        help='Start the script upload server (disabled by default)')
     parser.add_argument('--log-level', type=str, default='INFO',
                         help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default: INFO')
     return parser.parse_known_args()
@@ -67,7 +69,7 @@ def main():
         try:
             from controlpanel.server import app
             import uvicorn
-            server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=8000, log_config=None))
+            server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=args.port, log_config=None))
             Thread(target=server.run, daemon=True).start()
         except ModuleNotFoundError:
             print("Cannot start server because of missing optional [server] dependencies!")
