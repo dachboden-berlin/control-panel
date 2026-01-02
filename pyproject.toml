@@ -15,8 +15,8 @@ dependencies = [
     "pyftdi",
     "moderngl",
     "pygame_shaders",
-    "anaconsole @ git+https://github.com/AsinoEsel/anaconsole-pygame.git@main#egg=anaconsole",
-    "artnet-python @ git+https://github.com/AsinoEsel/artnet-python.git@main#egg=artnet",
+    "anaconsole @ git+https://github.com/AsinoEsel/anaconsole-pygame.git@36047d9",
+    "artnet-python @ git+https://github.com/AsinoEsel/artnet-python.git@50f962f",
 ]
 
 [project.optional-dependencies]
