@@ -12,41 +12,46 @@ from typing import TypeAlias, Union
 NestedList: TypeAlias = list[Union[str, "NestedList"]]
 
 
-def load_ignore_file(ignore_path: Path) -> list[str]:
-    if ignore_path.exists():
-        return ignore_path.read_text().splitlines()
-    return []
+SRC_PATH = Path(__file__).parent.parent.parent
 
 
 def get_included_files(base_path: Path) -> list[Path]:
-    included_files = []
+    """Walks base_path recursively. Each directory may contain a `.webreplignore` file with gitwildmatch patterns.
+    Patterns apply to that directory and all subdirectories (like .gitignore).
+    Returns a list of filepaths that are NOT ignored."""
+    base_path = base_path.resolve()
+    included_files: list[Path] = []
 
-    def walk_dir(current_path: Path, inherited_patterns: list[str]):
-        local_patterns = load_ignore_file(current_path / ".webreplignore")
-        patterns = inherited_patterns + local_patterns
-        spec = pathspec.PathSpec.from_lines("gitwildmatch", patterns)
+    def load_ignore_file(dir_path: Path) -> pathspec.PathSpec | None:
+        ignore_file = dir_path / ".webreplignore"
+        if not ignore_file.is_file():
+            return None
+        lines = ignore_file.read_text().splitlines()
+        return pathspec.PathSpec.from_lines("gitwildmatch", lines)
 
-        for entry in sorted(current_path.iterdir()):
-            rel = entry.relative_to(base_path)
-            ignored = spec.match_file(str(rel))
+    def walk(dir_path: Path, parent_specs: list[pathspec.PathSpec]) -> None:
+        # Load ignore rules for this directory
+        spec = load_ignore_file(dir_path)
+        specs = parent_specs + ([spec] if spec else [])
+
+        for entry in dir_path.iterdir():
+            rel_path = entry.relative_to(base_path)
+
+            # Check against all active ignore specs
+            ignored = any(
+                s.match_file(rel_path.as_posix())
+                for s in specs
+            )
+
+            if ignored:
+                continue
 
             if entry.is_dir():
-                # --- Key fix:
-                # Only skip this directory if ignored AND
-                # there are no negation patterns that might un-ignore something within.
-                # i.e. if there's a "!entry/**" somewhere, we must still walk it.
-                has_negation_for_sub = any(
-                    p.startswith(f"!{rel}/") or p.startswith(f"!{rel}/**") for p in patterns
-                )
-                if ignored and not has_negation_for_sub:
-                    continue
-                walk_dir(entry, patterns)
-
+                walk(entry, specs)
             elif entry.is_file():
-                if not ignored:
-                    included_files.append(entry)
+                included_files.append(entry)
 
-    walk_dir(base_path, [])
+    walk(base_path, [])
     return included_files
 
 
@@ -92,16 +97,17 @@ def create_structure(ws: webrepl.WebSocket, structure: NestedList) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description='Control Panel File Transfer Tool')
-    parser.add_argument("hostname", help="The name of the device to send the files to.")
-    parser.add_argument("path", help="Optional: the files to transfer. Default is all in CWD.")
+    parser.add_argument("hostname", help="The name of the device to send the files to, and to store checksums under.")
+    parser.add_argument("--path", type=str, default=None, help="Optional: the files to transfer. Default is all in CWD.")
     parser.add_argument("--IP", help="IP override")
+    parser.add_argument("--timeout", type=float, default=30.0, help="The duration of the socket timeout. Default is 30.")
     parser.add_argument('-f', '--force', action='store_true', help='Ignore the checksums.')
-    parser.add_argument('-p', '--password', help='The webrepl password.')
+    parser.add_argument('--password', type=str, help='The webrepl password.', required=True)
     parser.add_argument("--transfer-files-only", action='store_true', help="Only transfer files, don't create folder structure.")
     args = parser.parse_args()
 
     hostname: str = args.hostname
-    path = Path(args.path)
+    path = Path(args.path) if args.path else SRC_PATH
 
     all_files = get_included_files(path)
     changed_files: list[Path] = list(filter(lambda f: file_has_changed(str(f), hostname), all_files)) if not args.force else all_files
@@ -123,7 +129,7 @@ def main() -> None:
 
     print("Connecting to device... ", end="")
     try:
-        ws = webrepl.webrepl_connect(ip, args.password)
+        ws = webrepl.webrepl_connect(ip, args.password, timeout=args.timeout)
     except TimeoutError as e:
         print(e)
         return

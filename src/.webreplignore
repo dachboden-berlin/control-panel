@@ -1,0 +1,5 @@
+# Ignore everything by default
+*
+
+# Except the controlpanel dir
+!controlpanel
