@@ -4,7 +4,7 @@ from controlpanel.shared.base.led_strip import BaseLEDStrip, Generator, Literal,
 from .fixture import Fixture
 from micropython import const
 from controlpanel.upy.artnet import ArtNet
-from controlpanel.upy import rgb_decompression
+from controlpanel.upy.c_modules import rgb_decompression
 
 
 _BITMASK_RED = const(0b11100000)
