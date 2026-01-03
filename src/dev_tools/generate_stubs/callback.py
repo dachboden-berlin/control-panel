@@ -4,7 +4,7 @@ import importlib.util
 from types import ModuleType, GenericAlias
 from . import DEVICE_MANIFEST_PATH
 import inspect
-from typing import Dict, Set, Tuple, FrozenSet
+from typing import Dict, Set, Tuple, FrozenSet, get_origin, get_args, Literal
 from controlpanel.api.commons import NodeConfig
 
 
@@ -44,16 +44,23 @@ def get_device_names_classnames() -> dict[str, str]:
     return device_names
 
 
-def simple_type_name(obj: GenericAlias | type) -> str:
-    if isinstance(obj, GenericAlias):
-        # For generics like tuple[int, int], just return the string representation
-        return str(obj)
-    elif isinstance(obj, type):
-        # For regular classes like int, return just the name
-        return obj.__name__
-    else:
-        # For anything else, fallback to str()
-        return str(obj)
+def simple_type_name(tp) -> str:
+    origin = get_origin(tp)
+
+    if origin is Literal:
+        args = ", ".join(repr(a) for a in get_args(tp))
+        return f"Literal[{args}]"
+
+    if origin is tuple:
+        args = get_args(tp)
+        if len(args) == 2 and args[1] is Ellipsis:
+            return f"tuple[{simple_type_name(args[0])}, ...]"
+        return f"tuple[{', '.join(simple_type_name(a) for a in args)}]"
+
+    if isinstance(tp, type):
+        return tp.__name__
+
+    return str(tp)
 
 
 def get_device_dict() -> dict[str, dict[str, str]]:
