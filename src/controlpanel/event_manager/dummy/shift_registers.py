@@ -4,7 +4,7 @@ from .fixture import Fixture
 from artnet import ArtNet
 from typing import Callable, SupportsIndex
 import random
-from .esp32 import ESP32
+from .node import Node
 
 
 class _States:
@@ -103,12 +103,12 @@ class SipoShiftRegister(Fixture):
     def __init__(self,
                  _artnet: ArtNet,
                  _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
+                 _node: Node,
                  name: str,
                  count: int,
                  *,
                  universe: int | None = None):
-        super().__init__(_artnet, _loop, _esp, name, universe=universe)
+        super().__init__(_artnet, _loop, _node, name, universe=universe)
         self._states: _States = _States([False for _ in range(count * 8)], self.send_dmx)
 
     def send_dmx(self):

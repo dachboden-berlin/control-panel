@@ -1,21 +1,21 @@
 import asyncio
 from .fixture import Fixture
 from artnet import ArtNet
-from .esp32 import ESP32
+from .node import Node
 
 
 class DigitalPin(Fixture):
     def __init__(self,
                  _artnet: ArtNet,
                  _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
+                 _node: Node,
                  _name: str,
                  /,
                  *,
                  universe: int | None = None,
                  invert: bool = False,
                  ) -> None:
-        super().__init__(_artnet, _loop, _esp, _name, universe=universe)
+        super().__init__(_artnet, _loop, _node, _name, universe=universe)
         self._state: bool = False
 
     def send_dmx(self) -> None:

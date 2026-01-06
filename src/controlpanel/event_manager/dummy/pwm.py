@@ -1,7 +1,7 @@
 import asyncio
 from .fixture import Fixture
 from artnet import ArtNet
-from .esp32 import ESP32
+from .node import Node
 import struct
 
 
@@ -9,14 +9,14 @@ class PWM(Fixture):
     def __init__(self,
                  _artnet: ArtNet,
                  _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
+                 _node: Node,
                  _name: str,
                  /,
                  *,
                  duty: float = 1.0,
                  universe: int | None = None,
                  ) -> None:
-        super().__init__(_artnet, _loop, _esp, _name, universe=universe)
+        super().__init__(_artnet, _loop, _node, _name, universe=universe)
         self._duty: float = duty
         self._raw_duty: int = 0
 

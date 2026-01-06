@@ -4,7 +4,7 @@ from .fixture import Fixture
 from typing import SupportsIndex, Literal, Callable, Generator
 from artnet import ArtNet
 import struct
-from .esp32 import ESP32
+from .node import Node
 
 
 class _Pixels:
@@ -49,7 +49,7 @@ class LEDStrip(BaseLEDStrip, Fixture):
     def __init__(self,
                  _artnet: ArtNet,
                  _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
+                 _node: Node,
                  _name: str,
                  /,
                  length: int,
@@ -60,7 +60,7 @@ class LEDStrip(BaseLEDStrip, Fixture):
                  refresh_rate_hz: float = 30.0,
                  ) -> None:
         BaseLEDStrip.__init__(self, rgb_order)
-        Fixture.__init__(self, _artnet, _loop, _esp, _name, universe=universe)
+        Fixture.__init__(self, _artnet, _loop, _node, _name, universe=universe)
         self._pixel_proxy: _Pixels = _Pixels([(0, 0, 0) for _ in range(length)], self._send_pixel_data)
         self._use_compression: bool = use_compression
 

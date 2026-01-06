@@ -6,13 +6,13 @@ import asyncio
 import inspect
 from collections import defaultdict
 from controlpanel.shared.base import Device
-from controlpanel.api.dummy import Sensor, Fixture
+from .dummy import Sensor, Fixture
 import pygame as pg
 from artnet import ArtNet, OpCode, ART_NET_PORT
 import importlib.resources
 import json
 import io
-from controlpanel.api.dummy.esp32 import ESP32
+from .dummy.node import Node
 from anaconsole import console_command
 from controlpanel import api
 from controlpanel import dmx
@@ -63,7 +63,7 @@ class EventManager:
         Thread(target=self._run_async_loop, args=(), daemon=True).start()
 
         self._artpoll_response_future: asyncio.Future | None = None
-        self._nodes: list[ESP32] = list()
+        self._nodes: dict[str, Node] = {}
 
         self.print_incoming_arttrigger_packets: bool = False
         self.print_incoming_artdmx_packets: bool = False
@@ -149,38 +149,36 @@ class EventManager:
             name: str = reply['ShortName']
             mac: str = reply['Mac']
             collected_mac_addresses.add(mac)
-            if mac not in (esp.mac for esp in self._nodes):
-                if name not in (esp.name for esp in self._nodes):
-                    print(f"Unknown ESP '{name}' with mac {mac} has been registered")
-                    esp = ESP32(name)
-                    esp.mac = mac
-                    esp.ip = reply["IpAddress"]
-                    esp.status = reply['NodeReport']
-                    self._nodes.append(esp)
+            if mac not in (node.mac for node in self._nodes.values()):
+                if name not in self._nodes:
+                    print(f"Unknown Node '{name}' with mac {mac} has been registered")
+                    node = Node(name)
+                    self._nodes[name] = node
                 else:
-                    esp = next((esp for esp in self._nodes if esp.name == name))
-                    esp.mac = mac
-                    esp.ip = reply["IpAddress"]
-                    esp.status = reply['NodeReport']
-                    esp.subsequent_missed_replies = 0
                     print(f"ESP '{name}' with mac {mac} connected for the first time")
+                    node = self._nodes[name]
+                node.mac = mac
+                node.ip = reply["IpAddress"]
+                node.status = reply['NodeReport']
+                node.subsequent_missed_replies = 0
+
             else:
-                esp = next((esp for esp in self._nodes if esp.mac == mac), None)
-                if esp.subsequent_missed_replies > 0:
-                    print(f"ESP '{esp.name}' has regained the connection!")
-                esp.name = name
-                esp.ip = reply['IpAddress']
-                esp.status = reply['NodeReport']
-                esp.subsequent_missed_replies = 0
-        for esp in self._nodes:
-            if esp.status == "Lost connection!" or esp.status == "Never connected":
+                node = next((node for node in self._nodes.values() if node.mac == mac), None)
+                if node.subsequent_missed_replies > 0:
+                    print(f"ESP '{node.name}' has regained the connection!")
+                node.name = name
+                node.ip = reply['IpAddress']
+                node.status = reply['NodeReport']
+                node.subsequent_missed_replies = 0
+        for node in self._nodes.values():
+            if node.status == "Lost connection!" or node.status == "Never connected":
                 continue
-            if esp.mac not in collected_mac_addresses:
-                esp.subsequent_missed_replies += 1
-                print(f"ESP '{esp.name}' failed to reply! ({esp.subsequent_missed_replies} missed repl{'ies' if esp.subsequent_missed_replies > 1 else 'y'})")
-                if esp.subsequent_missed_replies >= 3:
-                    print(f"ESP '{esp.name}' lost the connection!")
-                    esp.status = 'Lost connection!'
+            if node.mac not in collected_mac_addresses:
+                node.subsequent_missed_replies += 1
+                print(f"ESP '{node.name}' failed to reply! ({node.subsequent_missed_replies} missed repl{'ies' if node.subsequent_missed_replies > 1 else 'y'})")
+                if node.subsequent_missed_replies >= 3:
+                    print(f"ESP '{node.name}' lost the connection!")
+                    node.status = 'Lost connection!'
 
     async def _poll_loop(self, poll_interval_seconds: int = 10):
         while True:
@@ -223,9 +221,9 @@ class EventManager:
 
         universe = start_universe
         for node_name, node_config in manifest.items():
-            if not node_name in (node.name for node in self._nodes):
-                self._nodes.append(ESP32(node_name))
-            esp = next((esp for esp in self._nodes if esp.name == node_name), None)
+            if not node_name in self._nodes:
+                self._nodes[node_name] = Node(node_name)
+            node = self._nodes[node_name]
             for device_name, (class_name, phys_kwargs, dummy_kwargs) in node_config["devices"].items():
                 kwargs = phys_kwargs | dummy_kwargs
                 cls = find_class_in_modules(libs, class_name)
@@ -240,7 +238,7 @@ class EventManager:
                                    if key in cls.__init__.__code__.co_varnames}
                 try:
                     if issubclass(cls, Fixture):
-                        device = cls(self._artnet, self.loop, esp, device_name, **filtered_kwargs)
+                        device = cls(self._artnet, self.loop, node, device_name, **filtered_kwargs)
                     elif issubclass(cls, Sensor):
                         device = cls(self._artnet, device_name, **filtered_kwargs)
                     elif issubclass(cls, dmx.DMXDevice):
@@ -251,9 +249,9 @@ class EventManager:
                     print(f"Type Error raised when instantiating {filtered_kwargs.get('name')}.")
                     raise
 
-                esp.devices[device.name] = device
+                node.devices[device.name] = device
 
-        self.devices = {name: device for esp in self._nodes for name, device in esp.devices.items()}
+        self.devices = {name: device for node in self._nodes.values() for name, device in node.devices.items()}
         self._sensor_dict = {name: device for name, device in self.devices.items() if isinstance(device, Sensor)}
         self._fixture_dict = {device.universe: device for device in self.devices.values() if isinstance(device, Fixture)}
 
@@ -331,15 +329,26 @@ class EventManager:
             IPv4Address(name_or_ip)
             return name_or_ip
         except ValueError:
-            try:
-                ip: str | None = next((esp for esp in self._nodes if esp.name == name_or_ip)).ip
-                if not ip:
-                    print(f"Node '{name_or_ip}' has no registered IP address.")
-                    return None
-                return ip
-            except StopIteration:
+            node = self._nodes.get(name_or_ip)
+            if node is None:
                 print(f"{name_or_ip} is neither a valid IPv4 address nor the name of a registered ArtNet node")
                 return None
+            if not node.ip:
+                print(f"Node '{name_or_ip}' has no registered IP address.")
+                return None
+            return node.ip
+
+    def _status_autocomplete(self, text: str) -> tuple[int, list[Autocomplete.Option]]:
+        return 0, [Autocomplete.Option(name, node.status) for name, node in self._nodes.items() if name.startswith(text) and name != text]
+
+    @console_command("status", is_cheat_protected=False, autocomplete_function=_status_autocomplete)
+    def _print_node_status(self, node_name: str) -> None:
+        """Prints the status of the given node."""
+        node = self._nodes.get(node_name)
+        if node is None:
+            print(f"Node '{node_name}' not found.")
+            return
+        print(f"{node.name} @ {node.ip if node.ip else '0.0.0.0'}: {node.status}")
 
     def _sensor_autocomplete(self, text: str) -> tuple[int, list[Autocomplete.Option]]:
         return 0, [Autocomplete.Option(sensor, "") for sensor in self._sensor_dict.keys() if sensor.startswith(text)]
@@ -384,6 +393,7 @@ class EventManager:
         """Mute all sensors except the specified sensor."""
         for sensor_name, sensor in self._sensor_dict.items():
             if sensor_name == sensor_to_solo:
+                sensor._muted = False
                 continue
             sensor._muted = True
 
@@ -419,11 +429,6 @@ class EventManager:
     @console_command(is_cheat_protected=True)
     def poll(self):
         self.loop.create_task(self._poll())
-
-    @console_command(is_cheat_protected=True)
-    def set_dmx_attr(self, device_name: str, attribute: str, value):
-        """Sets any attribute of any DMX device to any value"""
-        setattr(api.dmx.devices.get(device_name), attribute, value)
 
     @console_command("arttrigger_debug")
     def set_enable_print_arttrigger_packets(self, enable: int):

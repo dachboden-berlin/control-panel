@@ -1,7 +1,7 @@
 from typing import Hashable, Callable, Union, TypeVar
 from itertools import product
 from .api import subscribe
-from .commons import CallbackType
+from controlpanel.event_manager.commons import CallbackType
 
 
 T = TypeVar('T', bound=Hashable)

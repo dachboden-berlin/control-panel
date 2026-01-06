@@ -1,7 +1,7 @@
 from controlpanel.shared.base import Device
 
 
-class ESP32:
+class Node:
     def __init__(self, name: str) -> None:
         self.name: str = name
         self.mac: str | None = None

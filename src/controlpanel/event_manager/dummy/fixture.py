@@ -1,15 +1,19 @@
 import asyncio
 from abc import abstractmethod
-from controlpanel.api.dummy.esp32 import ESP32
+from .node import Node
 from controlpanel.shared.base import BaseFixture
 
 
+_PACKET_RETRY_COUNT = 2 # number of "retries" (duplicate sends) of packets
+_PACKET_RETRY_PAUSE_MS = 500  # time in milliseconds between "retries"
+
+
 class Fixture(BaseFixture):
-    def __init__(self, _artnet, _loop, _esp, _name: str, /, universe: int | None) -> None:
+    def __init__(self, _artnet, _loop, _node, _name: str, /, universe: int | None) -> None:
         super().__init__(_artnet, _name, universe=universe)
         self._loop: asyncio.AbstractEventLoop = _loop
         self._current_task: asyncio.Future | None = None
-        self._esp: ESP32 = _esp
+        self._node: Node = _node
         self._deafened: bool = False
 
     @property
@@ -22,10 +26,11 @@ class Fixture(BaseFixture):
 
         self._increment_seq()
 
-        # Cancel any ongoing packet send task
-        if self._current_task and not self._current_task.done():
-            self._current_task.cancel()
-
+        self._artnet.send_dmx(self.universe, self._seq, data, ip_override=self._node.ip)
+        
+        if not _PACKET_RETRY_COUNT:
+            return
+        
         # Start a new packet send task
         self._current_task = asyncio.run_coroutine_threadsafe(
             self._send_packets(self._seq, data),
@@ -33,9 +38,11 @@ class Fixture(BaseFixture):
         )
 
     async def _send_packets(self, seq: int, data: bytes | bytearray) -> None:
-        for _ in range(3):
-            self._artnet.send_dmx(self.universe, seq, data, ip_override=self._esp.ip)
-            await asyncio.sleep(0.5)
+        for _ in range(_PACKET_RETRY_COUNT):
+            await asyncio.sleep(_PACKET_RETRY_PAUSE_MS/1000)
+            if (seq != self._seq) and self.should_ignore_seq(seq):  # don't bother sending outdated packets
+                return
+            self._artnet.send_dmx(self.universe, seq, data, ip_override=self._node.ip)
 
     @abstractmethod
     def send_dmx(self) -> None:

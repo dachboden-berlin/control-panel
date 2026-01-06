@@ -2,11 +2,10 @@ import time
 import threading
 from typing import TypeVar
 from controlpanel.shared.base import Device
-from controlpanel.api.dummy import Fixture
 from .services import services
-from .commons import EventSourceType, EventActionType, EventValueType, CallbackType
 import inspect
 from types import ModuleType, FrameType
+from controlpanel.event_manager.commons import EventSourceType, EventActionType, EventValueType, CallbackType
 
 
 T = TypeVar("T", bound="BaseGame")

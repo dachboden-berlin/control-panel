@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 import importlib.util
-from types import ModuleType, GenericAlias
+from types import ModuleType
 from . import DEVICE_MANIFEST_PATH
 import inspect
 from typing import Dict, Set, Tuple, FrozenSet, get_origin, get_args, Literal
-from controlpanel.api.commons import NodeConfig
+from controlpanel.event_manager.commons import NodeConfig
 
 
 STUB_PATH = Path(importlib.util.find_spec("controlpanel.api").origin).parent / "callback.pyi"
@@ -13,7 +13,7 @@ STUB_PATH = Path(importlib.util.find_spec("controlpanel.api").origin).parent / "
 
 def collect_dummy_libs() -> list[ModuleType]:
     """Collects all the modules and packages that may contain classes that are interesting to us"""
-    from controlpanel.api import dummy
+    from controlpanel.event_manager import dummy
     return [dummy, ]
 
 
@@ -71,7 +71,7 @@ def get_device_dict() -> dict[str, dict[str, str]]:
 
     device_names_classnames: dict[str, str] = get_device_names_classnames()
 
-    from controlpanel.api.dummy import Sensor
+    from controlpanel.event_manager.dummy import Sensor
     dummy_sensor_classes: list[type] = collect_classes_from_libs(collect_dummy_libs(), filter_by_base_class=Sensor)
     dummy_sensor_class_mapping: dict[str, type] = {cls.__name__: cls for cls in dummy_sensor_classes}
 

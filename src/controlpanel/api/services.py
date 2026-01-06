@@ -1,8 +1,7 @@
 from typing import TYPE_CHECKING, Optional
 from controlpanel.dmx import DMXUniverse
-import types
 from artnet import ArtNet
-from .event_manager import EventManager
+from controlpanel.event_manager.event_manager import EventManager
 if TYPE_CHECKING:
     from controlpanel.game_manager import GameManager
 

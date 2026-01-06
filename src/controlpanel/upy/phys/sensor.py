@@ -2,6 +2,12 @@ import asyncio
 from controlpanel.shared.base import BaseSensor
 from controlpanel.shared.compatibility import abstractmethod
 from controlpanel.upy.artnet import ArtNet
+from micropython import const
+
+
+_CONTROL_PANEL_KEY = const(76)
+_PACKET_RETRY_COUNT = const(2) # number of "retries" (duplicate sends) of packets
+_PACKET_RETRY_PAUSE_MS = const(500)  # time in milliseconds between "retries"
 
 
 class Sensor(BaseSensor):
@@ -19,19 +25,19 @@ class Sensor(BaseSensor):
 
         self._increment_seq()
 
-        self._artnet.send_trigger(76, self._seq, data)
-
-        # Cancel any ongoing packet send task
-        current_task = asyncio.current_task()
-        if self._current_task is not None and self._current_task != current_task:
-            self._current_task.cancel()
+        self._artnet.send_trigger(_CONTROL_PANEL_KEY, self._seq, data)
+        
+        if not _PACKET_RETRY_COUNT:
+            return
 
         # Start a new packet send task
         self._current_task = asyncio.create_task(
-            self._send_packets(self._seq, data)
+            self._send_retry_packets(self._seq, data)
         )
 
-    async def _send_packets(self, seq: int, data: bytes | bytearray) -> None:
-        for _ in range(3):
-            await asyncio.sleep(0.5)
-            self._artnet.send_trigger(key=76, subkey=seq, data=data)
+    async def _send_retry_packets(self, seq: int, data: bytes | bytearray) -> None:
+        for _ in range(_PACKET_RETRY_COUNT):
+            await asyncio.sleep_ms(_PACKET_RETRY_PAUSE_MS)
+            if (seq != self._seq) and self.should_ignore_seq(seq):  # don't bother sending outdated packets
+                return
+            self._artnet.send_trigger(key=_CONTROL_PANEL_KEY, subkey=seq, data=data)
