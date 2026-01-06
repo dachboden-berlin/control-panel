@@ -3,6 +3,7 @@ from artnet import ArtNet
 from controlpanel.game_manager import GameManager
 from controlpanel.dmx import DMXUniverse, DMXDevice
 from controlpanel import api
+from controlpanel.event_manager import EventManager, dummy
 import argparse
 
 
@@ -45,10 +46,10 @@ def main():
     artnet = ArtNet()  # This is where we initialize our one and ONLY ArtNet instance for the entire program.
     api.services.artnet = artnet
 
-    event_manager = api.EventManager(artnet)
+    event_manager = EventManager(artnet)
     api.services.event_manager = event_manager
     # needs to be called after services.event_manager has been set
-    event_manager.instantiate_devices([api.dummy,])
+    event_manager.instantiate_devices([dummy,])
 
     game_manager = GameManager(resolution=(args.width, args.height) if not args.no_gui else None,
                                dev_args=unknown_args,
