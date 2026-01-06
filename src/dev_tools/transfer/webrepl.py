@@ -114,7 +114,7 @@ def send_req(ws, op, sz=0, fname=b""):
     ws.write(rec)
 
 
-def webrepl_put(ws, local_file, remote_file):
+def webrepl_put(ws, local_file: str, remote_file: str):
     """Upload a file to the remote device via WebREPL."""
     sz = os.stat(local_file).st_size
     dest = remote_file.encode("utf-8")
@@ -179,6 +179,11 @@ def run_webrepl_cmd(ws: WebSocket, command):
             break
 
     return output.decode(errors="ignore")
+
+
+def webrepl_interrupt(ws: WebSocket):
+    """Experimental!"""
+    ws.write(b"\x03", WEBREPL_FRAME_TXT)  # Ctrl-C interrupt
 
 
 def webrepl_connect(host, password, port=WEBREPL_PORT, timeout: float = 30.0) -> WebSocket:

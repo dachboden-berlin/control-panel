@@ -1,11 +1,13 @@
 import network
 import machine
 import sys
+from micropython import const
 
 
-FALLBACK_AP_PASSWORD = "micropython"
-CREDENTIALS = "credentials.json"
-HOSTNAME_MANIFEST = "hostname_manifest.json"
+_FALLBACK_AP_PASSWORD = const("micropython")
+_CREDENTIALS_FILE = const("credentials.json")
+_HOSTNAME_FILE = const("hostname.txt")
+
 MAC_ADDRESS: str | None = None
 LOCAL_IP: str | None = None
 INTERFACE: network.WLAN | network.LAN | None = None
@@ -35,25 +37,25 @@ def _set_mac_address(raw_mac_address: bytes) -> None:
 
 
 def set_hostname(hostname: str) -> None:
-    data = load_json(HOSTNAME_MANIFEST) or dict()
-    data[get_mac_address()] = hostname
-    dump_json(HOSTNAME_MANIFEST, data)
+    with open(_HOSTNAME_FILE, "w+") as f:
+        f.write(hostname)
 
 
 def get_hostname() -> str:
-    data: dict = load_json(HOSTNAME_MANIFEST) or dict()
-    mac_address: str = get_mac_address()
-    hostname: str = data.get(mac_address)
-    return hostname or "ESP-" + mac_address.replace(":", "")[-4:]
+    try:
+        with open(_HOSTNAME_FILE, "r") as f:
+            return f.read()
+    except OSError:
+        return "ESP-" + get_mac_address()[-4:]
 
 
 def create_ap(config: dict[str, str | int] | None = None) -> network.WLAN:
     print("Attempting to create AP...")
-    data = load_json(CREDENTIALS) or dict()
+    data = load_json(_CREDENTIALS_FILE) or dict()
     access_point_config = config or data.get("access_point", {})
     ssid, password, authmode = (
             access_point_config.get("ssid") or get_hostname(),
-            access_point_config.get("password") or FALLBACK_AP_PASSWORD,
+            access_point_config.get("password") or _FALLBACK_AP_PASSWORD,
             access_point_config.get("authmode") or 3,
     )
 
@@ -93,7 +95,7 @@ def establish_wifi_connection(timeout_ms: int = 20_000) -> network.WLAN | None:
     dhcp_hostname = get_hostname()
     sta_if.config(dhcp_hostname=dhcp_hostname, pm=network.WLAN.PM_NONE)
 
-    data = load_json(CREDENTIALS) or dict()
+    data = load_json(_CREDENTIALS_FILE) or dict()
     known_networks = data.get("known_networks", dict())
 
     try:
@@ -211,7 +213,7 @@ def rm_all(whitelist: list[str]|None = None):
     import os
     if whitelist is None:
         whitelist = []
-    whitelist += [f"{__name__}.py", "boot.py", "credentials.py", "webrepl_cfg.py", "hostname_manifest.json"]
+    whitelist += [f"{__name__}.py", "boot.py", "credentials.py", "webrepl_cfg.py", "hostname.txt"]
     for d in os.listdir():
         if d in whitelist:
             continue
@@ -238,7 +240,7 @@ def dump_json(filename: str, data: dict) -> None:
 def save_network(ssid: str, password: str) -> None:
     import ujson
 
-    data = load_json(CREDENTIALS) or dict()
+    data = load_json(_CREDENTIALS_FILE) or dict()
 
     if not data.get("known_networks"):
         data["known_networks"] = dict()
@@ -247,12 +249,12 @@ def save_network(ssid: str, password: str) -> None:
     data["known_networks"][ssid] = password
 
     # Save it back
-    with open(CREDENTIALS, "w") as file:
+    with open(_CREDENTIALS_FILE, "w") as file:
         ujson.dump(data, file)
 
     print(f"Added/Updated network: {ssid}")
 
 
 def list_saved_networks() -> None:
-    data = load_json(CREDENTIALS)
+    data = load_json(_CREDENTIALS_FILE)
     print(data["known_networks"])

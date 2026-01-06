@@ -1,27 +1,31 @@
 import utils
 from machine import reset, SoftSPI, I2C
 from controlpanel.upy import phys
-from controlpanel.upy.artnet import ArtNet, OpCode
+from controlpanel.upy.artnet import ArtNet
 from controlpanel.shared.base import Device
 from controlpanel.upy.phys import Fixture, Sensor
 from controlpanel.shared.compatibility import Callable
-import time
+from micropython import const
 import uasyncio as asyncio
-import network
 import webrepl
+
+
+_OP_ARTPOLL = const(0x2000)
+_OP_ARTCMD = const(0x2400)
+_OP_ARTDMX = const(0x5000)
 
 
 class Node:
     def __init__(self):
         self._name = utils.get_hostname()
         self._artnet = ArtNet()
-        self._artnet.subscribe(OpCode.ArtDmx, self.artdmx_callback)
-        self._artnet.subscribe(OpCode.ArtCommand, self.artcmd_callback)
-        self._artnet.subscribe(OpCode.ArtPoll, self.artpoll_callback)
-        self.commands: dict[str, Callable] = {
-            "RESET": reset,
-            "STOP": self._stop_updating_devices,
-            "PING": lambda: self._artnet.send_command(b"RETURN_PING"),
+        self._artnet.subscribe(_OP_ARTDMX, self.artdmx_callback)
+        self._artnet.subscribe(_OP_ARTCMD, self.artcmd_callback)
+        self._artnet.subscribe(_OP_ARTPOLL, self.artpoll_callback)
+        self.commands: dict[bytes, Callable] = {
+            b"RESET": reset,
+            b"STOP": self._stop_updating_devices,
+            b"PING": lambda: self._artnet.send_command(b"RETURN_PING"),
         }
         manifest = self._parse_manifest()
         self._spi: SoftSPI | None = self._instantiate_spi(manifest)
@@ -98,6 +102,7 @@ class Node:
             if device.update_rate_ms > 0
         ]
         tasks.append(self.connection_watchdog())
+        tasks.append(self.artnet_task())
         await asyncio.gather(*tasks)
 
     async def connection_watchdog(self, sleep_ms: int = 10_000, retries: int = 5):
@@ -119,36 +124,40 @@ class Node:
                 utils.INTERFACE.connect()
             await asyncio.sleep_ms(sleep_ms)
 
-
-    def artcmd_callback(self, op_code: OpCode, ip: str, port: int, reply):
-        command = reply.get("Command")
-        func = self.commands.get(command)
+    def artcmd_callback(self, op_code: int, ip: str, port: int, payload: tuple[int, int, int, memoryview]):
+        prot_ver, esta, length, cmd_buf = payload
+    
+        cmd = bytes(cmd_buf)
+        func = self.commands.get(cmd)
         if func:
-            print(f"Received command {command}")
+            print(f"Received command {cmd}")
             func()
         else:
-            print("Received unknown command: {}".format(command))
+            print(f"Received unknown command {cmd}")
 
-    def artdmx_callback(self, op_code: OpCode, ip: str, port: int, reply):
-        universe: int = reply.get("Universe")
-        seq: int = reply.get("Sequence")
-        data: bytearray = reply.get("Data")
-        fixture: Fixture | None = self.universes.get(universe)
-        if fixture is None or fixture.should_ignore_seq(seq):
+    def artdmx_callback(self, op_code: int, ip: str, port: int, payload):
+        seq, universe, data = payload
+        fixture = self.universes.get(universe)
+        if not fixture or fixture.should_ignore_seq(seq):
             return
         fixture._seq = seq
         fixture.parse_dmx_data(data)
 
-    def artpoll_callback(self, op_code: OpCode, ip: str, port: int, reply):
-        self._artnet.address = (ip, port)
-        print(f"Received ArtPoll packet, sending ArtPollReply @ {time.ticks_ms()}.")
+    def artpoll_callback(self, op_code: int, ip: str, port: int, payload):
+        # prot_ver, flags, diag_prio, tp_bot, tp_top, esta, oem = payload
+        self._artnet.address = (ip, self._artnet.address[1])  # Update target address to sender
         asyncio.create_task(self.delayed_reply_to_artpoll(ip, port))
+
+    async def artnet_task(self):
+        while True:
+            self._artnet.poll()
+            await asyncio.sleep_ms(2)
 
     async def delayed_reply_to_artpoll(self, ip: str, port: int):
         from random import randint
         await asyncio.sleep_ms(randint(0, 1000))  # ArtNet 4 standard specifies a random delay of up to 1s
         self._artnet.send_poll_reply(ip=utils.get_local_ip(),
-                                     port=self._artnet.port,
+                                     port=self._artnet.address[1],
                                      address=(ip, port),
                                      short_name=self._name,
                                      long_name="Control Panel ESP32 Node: " + self._name,

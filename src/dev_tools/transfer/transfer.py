@@ -98,8 +98,8 @@ def create_structure(ws: webrepl.WebSocket, structure: NestedList) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description='Control Panel File Transfer Tool')
     parser.add_argument("hostname", help="The name of the device to send the files to, and to store checksums under.")
-    parser.add_argument("--path", type=str, default=None, help="Optional: the files to transfer. Default is all in CWD.")
-    parser.add_argument("--IP", help="IP override")
+    parser.add_argument("--path", type=str, default=None, help="Optional: the files to transfer. Default src/ directory.")
+    parser.add_argument("--IP", type=str, default=None, help="IP override")
     parser.add_argument("--timeout", type=float, default=30.0, help="The duration of the socket timeout. Default is 30.")
     parser.add_argument('-f', '--force', action='store_true', help='Ignore the checksums.')
     parser.add_argument('--password', type=str, help='The webrepl password.', required=True)
@@ -137,6 +137,10 @@ def main() -> None:
         print(e)
         return
     print("Connected!")
+    
+    # print("Sending Keyboard Interrupt ^C...", end="")
+    # webrepl.webrepl_interrupt(ws)
+    # print(" Done!")
 
     if not args.transfer_files_only:
         print("Creating folder structure... ", end="")
@@ -147,10 +151,17 @@ def main() -> None:
     print("Transferring files... ")
     for file in changed_files:
         local_file = str(file)
-        remote_file = str(file).replace("\\", "/") if file.name not in {"main.py", "boot.py", "credentials.json", "utils.py", "hostname_manifest.json"} else file.name
+        if file.name in {"main.py", "boot.py", "credentials.json", "utils.py"}:
+            remote_file = file.name
+        else:
+            remote_file = str(file.relative_to(path)).replace("\\", "/")
+            print(remote_file)
         webrepl.webrepl_put(ws, local_file, remote_file)
         update_checksum(local_file, hostname)
     print("Files transferred!")
+
+    if args.IP:  # if IP override was used, force update to hostname.txt
+        webrepl.run_webrepl_cmd(ws, f'f=open("hostname.txt"); f.write("{hostname}"); f.close()')
 
     try:
         webrepl.run_webrepl_cmd(ws, 'import machine; machine.reset()')
