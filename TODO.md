@@ -3,3 +3,4 @@
 - check typing (ty)
 - extend pre-commit hooks
 - run pytests pre-push?
+- add logging instead of print
