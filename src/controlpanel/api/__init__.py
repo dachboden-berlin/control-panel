@@ -8,7 +8,7 @@ from .commons import (
     Condition,
     CallbackType,
     Subscriber,
-    )
+)
 from typing import Literal, TYPE_CHECKING, Callable, TypeVar
 from .services import services
 from .load_scripts import load_scripts
@@ -20,12 +20,12 @@ from .event_manager import EventManager
 from . import logger
 
 
-
 if TYPE_CHECKING:
     from artnet import ArtNet
     from controlpanel.game_manager import GameManager, BaseGame
     from controlpanel.dmx import DMXUniverse
     from types import ModuleType
+
     artnet: ArtNet
     event_manager: EventManager
     game_manager: GameManager

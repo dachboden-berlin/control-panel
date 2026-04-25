@@ -52,9 +52,8 @@ class ArtNet:
 
     def __init_socket(self):
         self.socket_server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.socket_server.setsockopt(
-            socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket_server.bind(('', ART_NET_PORT))  # Listen on any valid IP
+        self.socket_server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket_server.bind(("", ART_NET_PORT))  # Listen on any valid IP
         self.socket_server.setblocking(False)  # Set socket to non-blocking mode
 
         self.socket_server.settimeout(None)
@@ -108,7 +107,7 @@ class ArtNet:
         self.sock.sendto(pack_dmx(universe15bit, seq, dmx_data), self.address)
 
     def send_nzs(
-            self, universe15bit: int, sequence: int, start_code: int, dmx_data: bytearray
+        self, universe15bit: int, sequence: int, start_code: int, dmx_data: bytearray
     ) -> None:
         """Send an ArtNzs packet."""
         self.sock.sendto(
@@ -127,30 +126,29 @@ class ArtNet:
         """Sends an ArtCommand packet."""
         self.sock.sendto(pack_command(command_data), self.address)
 
-    def send_poll_reply(self,
-                        ip: str,
-                        port: int = ART_NET_PORT,
-                        address: tuple[str, int] | None = None,
-                        short_name: str = "Unnamed Node",
-                        long_name: str = "This is an unnamed node",
-                        node_report: str = f"#0001 [0000] Missing node report",
-                        mac: str | bytes = b"\x02\x00\x00\x00\x00\x01") -> None:
+    def send_poll_reply(
+        self,
+        ip: str,
+        port: int = ART_NET_PORT,
+        address: tuple[str, int] | None = None,
+        short_name: str = "Unnamed Node",
+        long_name: str = "This is an unnamed node",
+        node_report: str = "#0001 [0000] Missing node report",
+        mac: str | bytes = b"\x02\x00\x00\x00\x00\x01",
+    ) -> None:
         """Send an ArtPollReply packet."""
-        self.sock.sendto(pack_poll_reply(ip,
-                                         port,
-                                         short_name,
-                                         long_name,
-                                         node_report,
-                                         mac),
-                         address or self.address)
+        self.sock.sendto(
+            pack_poll_reply(ip, port, short_name, long_name, node_report, mac),
+            address or self.address,
+        )
 
     def configure_ip(
-            self,
-            dhcp: bool = False,
-            prog_ip: str | None = None,
-            prog_sm: str | None = None,
-            prog_gw: str | None = None,
-            reset: bool = False,
+        self,
+        dhcp: bool = False,
+        prog_ip: str | None = None,
+        prog_sm: str | None = None,
+        prog_gw: str | None = None,
+        reset: bool = False,
     ) -> None:
         """
         Set the IP address, subnet mask and the default gateway, enable DHCP or reset.
@@ -172,10 +170,10 @@ class ArtNet:
         )
 
     def configure_universe(
-            self,
-            net: int,
-            sub: int,
-            universe: int,
+        self,
+        net: int,
+        sub: int,
+        universe: int,
     ) -> None:
         """
         Set the universe for ArtNet nodes.

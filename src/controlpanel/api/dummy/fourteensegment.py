@@ -104,32 +104,37 @@ character_dict = {
 
 
 class FourteenSegmentDisplay(Fixture):
-    def __init__(self,
-                 _artnet: ArtNet,
-                 _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
-                 _name: str,
-                 /,
-                 element_count: int,
-                 *,
-                 universe: int | None =None,
-                 ) -> None:
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _loop: asyncio.AbstractEventLoop,
+        _esp: ESP32,
+        _name: str,
+        /,
+        element_count: int,
+        *,
+        universe: int | None = None,
+    ) -> None:
         super().__init__(_artnet, _loop, _esp, _name, universe=universe)
 
         self._text: str = ""
         self._element_count: int = element_count
         self._digit_count: int = element_count * 2
 
-        self._segments: list[tuple[int, int, int]] = [(0, 0, 0) for _ in range(element_count*32)]
+        self._segments: list[tuple[int, int, int]] = [
+            (0, 0, 0) for _ in range(element_count * 32)
+        ]
 
     def draw(self, color: tuple[int, int, int]) -> None:
         for i, char in enumerate(self._text):
-            is_left = (i % 2 == 0)
+            is_left = i % 2 == 0
             bitmap = character_dict.get(char, character_dict[" "])
             for b in range(14 - 1, -1, -1):
                 segment_on = (bitmap >> b) & 1
                 segment_idx = b if is_left else 17 + b
-                self._segments[(i//2) * 32 + segment_idx] = color if segment_on else (0, 0, 0)
+                self._segments[(i // 2) * 32 + segment_idx] = (
+                    color if segment_on else (0, 0, 0)
+                )
         self.send_dmx()
 
     @property
@@ -138,25 +143,27 @@ class FourteenSegmentDisplay(Fixture):
 
     @text.setter
     def text(self, text: str) -> None:
-        self._text = text[:self._digit_count].ljust(self._digit_count, " ")
-        self.draw((255,0,0))
+        self._text = text[: self._digit_count].ljust(self._digit_count, " ")
+        self.draw((255, 0, 0))
 
     def send_dmx(self) -> None:
-        data = bytes(value for rgb in self._segments for value in self._compress_rgb_to_hl(rgb))
+        data = bytes(
+            value for rgb in self._segments for value in self._compress_rgb_to_hl(rgb)
+        )
         print(data)
         self._send_dmx_packet(data)
 
     @staticmethod
     def _compress_rgb_to_hl(rgb: tuple[int, int, int]) -> tuple[int, int]:
         h, l, s = colorsys.rgb_to_hls(*rgb)
-        h = int(h*255)
+        h = int(h * 255)
         l = int(l)
         return h, l
 
     def blackout(self) -> None:
-        self._segments = [(0, 0, 0) for _ in range(self._element_count*32)]
+        self._segments = [(0, 0, 0) for _ in range(self._element_count * 32)]
         self.send_dmx()
 
     def whiteout(self) -> None:
-        self._segments = [(255, 0, 0) for _ in range(self._element_count*32)]
+        self._segments = [(255, 0, 0) for _ in range(self._element_count * 32)]
         self.send_dmx()

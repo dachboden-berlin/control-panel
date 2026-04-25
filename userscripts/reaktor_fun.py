@@ -8,10 +8,10 @@ logger = get_logger("ReaktorFun")
 # We track the desired state of our toggleable devices
 # Default to False (Off)
 device_states = {
-    "fog": False,       # Controlled by Sw 0/1
-    "plasma": False,    # Controlled by Sw 2/3
-    "spot_left": False, # Controlled by Sw 4/5
-    "spot_right": False # Controlled by Sw 6/7
+    "fog": False,  # Controlled by Sw 0/1
+    "plasma": False,  # Controlled by Sw 2/3
+    "spot_left": False,  # Controlled by Sw 4/5
+    "spot_right": False,  # Controlled by Sw 6/7
 }
 
 # --- Mapping ---
@@ -31,6 +31,7 @@ INPUT_MAP = {
 
 # --- Input Callback ---
 
+
 @api.callback(source="AnnieShiftRegister")
 def on_switch_event(event):
     """
@@ -46,18 +47,18 @@ def on_switch_event(event):
     So we ONLY act on `pressed == True`.
     """
     changes = False
-    
+
     # Iterate through all changes in this event
     # event.value is [(idx, bool), ...]
     for idx, pressed in event.value:
         if pressed:
             if idx in INPUT_MAP:
                 key, state_val = INPUT_MAP[idx]
-                
+
                 if device_states[key] != state_val:
                     device_states[key] = state_val
                     logger.info(f"[Reaktor] {key} -> {state_val}")
-                    
+
                     # Apply Digital States Immediately
                     if key == "fog":
                         if state_val:
@@ -69,10 +70,12 @@ def on_switch_event(event):
                             api.get_device("Plasmakugel").turn_on()
                         else:
                             api.get_device("Plasmakugel").turn_off()
-                    # Spots are handled in loop for Color, 
+                    # Spots are handled in loop for Color,
                     # but we could force an update for responsiveness if we wanted.
-                    
+
+
 # --- Main Loop ---
+
 
 def get_normalized_poti(name):
     dev = api.get_device(name)
@@ -85,20 +88,21 @@ def get_normalized_poti(name):
         val /= 4095.0
     return max(0.0, min(1.0, val))
 
+
 @api.call_with_frequency(1)
 def loop():
     # 1. Calculate Common Color from Potis
     hue = get_normalized_poti("PotiLeft")
     bri = get_normalized_poti("PotiRight")
-    
+
     # Saturation fixed at 1.0 for vibrant color
     r, g, b = colorsys.hsv_to_rgb(hue, 1.0, bri)
-    
+
     # RGBW tuple (R, G, B, W) - we leave W=0 for pure color
     # Scale to 0-255
-    color_on = (int(r*255), int(g*255), int(b*255), 0)
+    color_on = (int(r * 255), int(g * 255), int(b * 255), 0)
     color_off = (0, 0, 0, 0)
-    
+
     # 2. Update Spots based on State
     spot_l = api.get_device("EntranceSpotLeft")
     if spot_l:

@@ -7,45 +7,45 @@ RENDER_HEIGHT = RENDER_SIZE[1]
 
 
 downscale_uniforms = {
-    '_MainTex': 0,
+    "_MainTex": 0,
 }
 
 threshold_shader_uniforms = {
-    '_MainTex': 1,
-    '_LuminanceThreshold': 0.07,
+    "_MainTex": 1,
+    "_LuminanceThreshold": 0.07,
 }
 
 blur_shader_uniforms = {
-    '_MainTex': 1,
-    '_Sigma': (sigma := 10),
-    'u_resolution': RENDER_SIZE,
-    '_KernelSize': 4*sigma+1,
+    "_MainTex": 1,
+    "_Sigma": (sigma := 10),
+    "u_resolution": RENDER_SIZE,
+    "_KernelSize": 4 * sigma + 1,
 }
 
 ghost_shader_uniforms = {
-    '_MainTex': 1,
-    '_SecondaryTex': 2,
-    '_NewIntensity': 0.6,
-    '_GhostInfluence': 0.9,
+    "_MainTex": 1,
+    "_SecondaryTex": 2,
+    "_NewIntensity": 0.6,
+    "_GhostInfluence": 0.9,
 }
 
 add_shader_uniforms = {
-    '_MainTex': 0,
-    '_SecondaryTex': 2,
-    '_Influence': (.25, .25, .25, 0.0), # TODO: Does this do anything?
+    "_MainTex": 0,
+    "_SecondaryTex": 2,
+    "_Influence": (0.25, 0.25, 0.25, 0.0),  # TODO: Does this do anything?
 }
 
 crt_shader_uniforms = {
-    '_MainTex': 0,
-    '_Curvature': 8.0,
-    '_VignetteWidth': 40.0,
-    '_ScreenParams': RENDER_SIZE,
-    '_ScanlineHeight': 2.0 / RENDER_HEIGHT,
-    '_ScanlineStrength': 1.2,
+    "_MainTex": 0,
+    "_Curvature": 8.0,
+    "_VignetteWidth": 40.0,
+    "_ScreenParams": RENDER_SIZE,
+    "_ScanlineHeight": 2.0 / RENDER_HEIGHT,
+    "_ScanlineStrength": 1.2,
 }
 
 to_bgra_uniforms = {
-    '_MainTex': 0,
+    "_MainTex": 0,
 }
 
 shader_params: dict[str, tuple[str, str, dict]] = {

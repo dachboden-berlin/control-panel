@@ -27,7 +27,14 @@ _SPI_CS = const(0)  # D3
 
 
 class SevenSegment:
-    def __init__(self, spi: SoftSPI, digits=8, scan_digits=_MAX7219_DIGITS, cs=_SPI_CS, reverse=False):
+    def __init__(
+        self,
+        spi: SoftSPI,
+        digits=8,
+        scan_digits=_MAX7219_DIGITS,
+        cs=_SPI_CS,
+        reverse=False,
+    ):
         """
         Constructor:
         `digits` should be the total number of individual digits being displayed
@@ -46,11 +53,13 @@ class SevenSegment:
         self._spi = spi
         self._cs = Pin(cs, Pin.OUT, value=1)
 
-        self.command(_MAX7219_REG_SCANLIMIT, scan_digits - 1)  # digits to display on each device  0-7
-        self.command(_MAX7219_REG_DECODEMODE, 0)   # use segments (not digits)
+        self.command(
+            _MAX7219_REG_SCANLIMIT, scan_digits - 1
+        )  # digits to display on each device  0-7
+        self.command(_MAX7219_REG_DECODEMODE, 0)  # use segments (not digits)
         self.command(_MAX7219_REG_DISPLAYTEST, 0)  # no display test
-        self.command(_MAX7219_REG_SHUTDOWN, 1)     # not blanking mode
-        self.brightness(7)                        # intensity: range: 0..15
+        self.command(_MAX7219_REG_SHUTDOWN, 1)  # not blanking mode
+        self.brightness(7)  # intensity: range: 0..15
         self.clear()
 
     def command(self, register, data):
@@ -82,7 +91,13 @@ class SevenSegment:
                 current_dev = dev
 
             for pos in range(self.scan_digits):
-                self._write([pos + _MAX7219_REG_DIGIT0, buffer[pos + (current_dev * self.scan_digits)]] + ([_MAX7219_REG_NOOP, 0] * dev))
+                self._write(
+                    [
+                        pos + _MAX7219_REG_DIGIT0,
+                        buffer[pos + (current_dev * self.scan_digits)],
+                    ]
+                    + ([_MAX7219_REG_NOOP, 0] * dev)
+                )
 
     def brightness(self, intensity):
         """Sets the brightness level of all cascaded devices to the same intensity level, ranging from 0..15."""
@@ -99,7 +114,7 @@ class SevenSegment:
     def text(self, text):
         """Outputs the text (as near as possible) on the specific device."""
         self.clear(False)
-        text = text[:self.digits]  # make sure we don't overrun the buffer
+        text = text[: self.digits]  # make sure we don't overrun the buffer
         for pos, char in enumerate(text):
             self.letter(pos, char, flush=False)
 
@@ -108,26 +123,26 @@ class SevenSegment:
     def number(self, val):
         """Formats the value according to the parameters supplied, and displays it."""
         self.clear(False)
-        strval = ''
+        strval = ""
         if isinstance(val, (int, float)):
             strval = str(val)
         elif isinstance(val, str):
-            if val.replace('.', '', 1).strip().isdigit():
+            if val.replace(".", "", 1).strip().isdigit():
                 strval = val
 
-        if '.' in strval:
-            strval = strval[:self.digits + 1]
+        if "." in strval:
+            strval = strval[: self.digits + 1]
         else:
-            strval = strval[:self.digits]
+            strval = strval[: self.digits]
 
         pos = 0
         for char in strval:
             dot = False
-            if char == '.':
+            if char == ".":
                 continue
             else:
                 if pos < len(strval) - 1:
-                    if strval[pos + 1] == '.':
+                    if strval[pos + 1] == ".":
                         dot = True
                 self.letter(pos, char, dot, False)
                 pos += 1

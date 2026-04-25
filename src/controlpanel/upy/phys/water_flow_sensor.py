@@ -6,15 +6,17 @@ from controlpanel.upy.artnet import ArtNet
 
 class WaterFlowSensor(Sensor):
     def __init__(
-            self,
-            _context: tuple[ArtNet, SoftSPI, I2C],
-            name: str,
-            pin: int,
-            polling_rate_hz: float,
-        ) -> None:
+        self,
+        _context: tuple[ArtNet, SoftSPI, I2C],
+        name: str,
+        pin: int,
+        polling_rate_hz: float,
+    ) -> None:
         Sensor.__init__(self, _context[0], name, polling_rate_hz)
         self._pin = Pin(pin, Pin.IN, Pin.PULL_UP)
-        self._pin.irq(trigger=Pin.IRQ_RISING, handler=self.water_flow_irq_handler)  # correct edge?
+        self._pin.irq(
+            trigger=Pin.IRQ_RISING, handler=self.water_flow_irq_handler
+        )  # correct edge?
         self._flow_counter: int = 0
 
     def water_flow_irq_handler(self, pin: Pin):

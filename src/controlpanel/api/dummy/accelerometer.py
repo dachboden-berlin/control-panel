@@ -9,13 +9,17 @@ class Accelerometer(Sensor):
     }
 
     def __init__(
-            self,
-            _artnet: ArtNet,
-            _name: str,
+        self,
+        _artnet: ArtNet,
+        _name: str,
     ) -> None:
         super().__init__(_artnet, _name)
         self._gyro: tuple[float | None, float | None, float | None] = (None, None, None)
-        self._real_gyro: tuple[float | None, float | None, float | None] = (None, None, None)
+        self._real_gyro: tuple[float | None, float | None, float | None] = (
+            None,
+            None,
+            None,
+        )
 
     @property
     def desynced(self) -> bool:
@@ -34,5 +38,5 @@ class Accelerometer(Sensor):
 
     def parse_trigger_payload(self, data: bytes, timestamp: float) -> None:
         assert len(data) == 6, f"Data is of unexpected length ({len(data)} bytes)"
-        self._gyro = self._real_gyro = struct.unpack('<3e', data)
+        self._gyro = self._real_gyro = struct.unpack("<3e", data)
         self._fire_event("GyroRead", self._gyro)

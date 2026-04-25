@@ -11,18 +11,20 @@ _DEFAULT_POLLING_RATE_HZ = const(1.0)
 
 class BananaPlugs(Sensor):
     def __init__(
-            self,
-            _context: tuple[ArtNet, SoftSPI, I2C],
-            _name: str,
-            plug_pins: list[int],
-            socket_pins: list[int],
-            *,
-            polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
+        self,
+        _context: tuple[ArtNet, SoftSPI, I2C],
+        _name: str,
+        plug_pins: list[int],
+        socket_pins: list[int],
+        *,
+        polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
     ) -> None:
         super().__init__(_context[0], _name, polling_rate_hz)
         self._connections: list[int] = [_NO_CONNECTION for _ in plug_pins]
         self.plug_pins = [Pin(plug_pin, Pin.OUT) for plug_pin in plug_pins]
-        self.socket_pins = [Pin(socket_pin, Pin.IN, Pin.PULL_DOWN) for socket_pin in socket_pins]
+        self.socket_pins = [
+            Pin(socket_pin, Pin.IN, Pin.PULL_DOWN) for socket_pin in socket_pins
+        ]
         for plug_pin in self.plug_pins:
             plug_pin.value(0)
 
@@ -50,4 +52,4 @@ class BananaPlugs(Sensor):
                 new_connections.append((plug_idx, connected_socket_idx))
 
         for plug_idx, socket_idx in new_connections:
-            self._send_trigger_packet(struct.pack('BB', plug_idx, socket_idx))
+            self._send_trigger_packet(struct.pack("BB", plug_idx, socket_idx))

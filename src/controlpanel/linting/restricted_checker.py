@@ -2,11 +2,12 @@ import ast
 from pathlib import Path
 from controlpanel.api.load_scripts_helper import ALLOWED_MODULES
 
+
 class RestrictedPythonChecker:
     name = "restrictedpython-checker"
     version = "0.1.0"
 
-    def __init__(self, tree, filename, always_check = False):
+    def __init__(self, tree, filename, always_check=False):
         self.tree = tree
         self.filename = filename
         self.always_check = always_check
@@ -16,7 +17,6 @@ class RestrictedPythonChecker:
             return
 
         for node in ast.walk(self.tree):
-
             # -----------------------------------------------------------
             # RSP001 – AnnAssign forbidden
             # -----------------------------------------------------------
@@ -80,7 +80,9 @@ class RestrictedPythonChecker:
             # -----------------------------------------------------------
             # RSP007 – Function or class names starting with "_" forbidden
             # -----------------------------------------------------------
-            if isinstance(node, ast.FunctionDef) or isinstance(node, ast.AsyncFunctionDef):
+            if isinstance(node, ast.FunctionDef) or isinstance(
+                node, ast.AsyncFunctionDef
+            ):
                 if node.name.startswith("_") and not self._is_dunder(node.name):
                     yield (
                         node.lineno,

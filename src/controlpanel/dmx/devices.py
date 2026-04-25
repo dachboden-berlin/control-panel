@@ -2,6 +2,7 @@
 This module describes the properties and behaviors of DMX Devices,
 and are modeled after real-life devices.
 """
+
 from .dmx import DMXDevice, DMXUniverse
 import numpy as np
 from enum import Enum
@@ -50,21 +51,30 @@ class MovingHead(DMXDevice):
     0.50 is fully up
     1.00 is pointing back
     """
-    THETA_RANGE = (-95*np.pi/180, -5*np.pi/180)
+
+    THETA_RANGE = (-95 * np.pi / 180, -5 * np.pi / 180)
     NUM_COLORS = 7
     NUM_GOBOS1 = 8
     NUM_GOBOS2 = 7
     BEAM_ANGLE = 16
-    COLORS = {0: (255, 255, 255),
-              1: (255, 0, 0),
-              2: (0, 255, 0),
-              3: (0, 0, 255),
-              4: (255, 255, 0),
-              5: (255, 0, 255),
-              6: (0, 255, 255),
-              }
+    COLORS = {
+        0: (255, 255, 255),
+        1: (255, 0, 0),
+        2: (0, 255, 0),
+        3: (0, 0, 255),
+        4: (255, 255, 0),
+        5: (255, 0, 255),
+        6: (0, 255, 255),
+    }
 
-    def __init__(self, name: str, chan_no: int, *, yaw_limit: tuple[float, float] | None = None, pitch_limit: tuple[float, float] | None = None):
+    def __init__(
+        self,
+        name: str,
+        chan_no: int,
+        *,
+        yaw_limit: tuple[float, float] | None = None,
+        pitch_limit: tuple[float, float] | None = None,
+    ):
         super().__init__(name, chan_no, num_chans=14)
         self._intensity: float = 1.0
         self._strobe: int = 255
@@ -80,9 +90,9 @@ class MovingHead(DMXDevice):
         self._pan_fine: float = 0.0
         self._tilt_fine: float = 0.0
         self._reset: float = 0.0
-        
+
         self._yaw: float = 0.0
-        self._pitch: float = -np.pi/4
+        self._pitch: float = -np.pi / 4
         self.strobe_frequency: float = 1.0
         self.prism_speed: float = 0
 
@@ -92,121 +102,125 @@ class MovingHead(DMXDevice):
 
     def get_rgb(self):
         return self.COLORS[self.color]
-    
+
     def reset(self):
         self._reset = 1.0
-    
+
     @property
     def intensity(self):
         return self._intensity
-    
+
     @intensity.setter
     def intensity(self, value: float):
         self._intensity = min(1.0, max(0.0, value))
-    
+
     @property
     def yaw(self) -> float:
         return self._yaw
-    
+
     @yaw.setter
     def yaw(self, radians: float):
-        self._pan = radians / (3*np.pi)  # 3pi = 540°
-        if self._pan > 540/540:
-            self._pan -= 360/540
-        elif self._pan < 0/540:
-            self._pan += 360/540
-        unclamped_yaw = self._pan * 3*np.pi
-        self._yaw = max(min(unclamped_yaw, self.yaw_limit[1]), self.yaw_limit[0]) if self.yaw_limit else unclamped_yaw
+        self._pan = radians / (3 * np.pi)  # 3pi = 540°
+        if self._pan > 540 / 540:
+            self._pan -= 360 / 540
+        elif self._pan < 0 / 540:
+            self._pan += 360 / 540
+        unclamped_yaw = self._pan * 3 * np.pi
+        self._yaw = (
+            max(min(unclamped_yaw, self.yaw_limit[1]), self.yaw_limit[0])
+            if self.yaw_limit
+            else unclamped_yaw
+        )
 
     @property
     def pitch(self) -> float:
         return self._pitch
-    
+
     @pitch.setter
     def pitch(self, radians: float):
         angle = max(min(self.THETA_RANGE[1], radians), self.THETA_RANGE[0])
         self._pitch = angle
-        self._tilt = angle/np.pi + 1/2
+        self._tilt = angle / np.pi + 1 / 2
 
     @property
     def speed(self):
         return self._speed
-    
+
     @speed.setter
     def speed(self, value: float):
         self._speed = min(1.0, max(0.0, value))
-        
+
     @property
     def prism(self):
         return True if self._prism >= 10 else False
-    
+
     @prism.setter
     def prism(self, value: bool):
         if value is True:
-            self._prism = 15 + int(240*self.prism_speed)
+            self._prism = 15 + int(240 * self.prism_speed)
         elif value is False:
             self._prism = 0
-    
+
     @property
     def strobe(self):
         return True if self._strobe <= 251 else False
-    
+
     @strobe.setter
     def strobe(self, value: bool):
         if value is True:
-            self._strobe = 4 + int(247*self.strobe_frequency)
+            self._strobe = 4 + int(247 * self.strobe_frequency)
         elif value is False:
             self._strobe = 255
-    
+
     @property
     def color(self):
         return self._color // 5
-    
+
     @color.setter
     def color(self, value: int):
-        self._color = 5*(value % self.NUM_COLORS)
-    
+        self._color = 5 * (value % self.NUM_COLORS)
+
     @property
     def gobo1(self):
         return self._gobo1 // 10
-    
+
     @gobo1.setter
     def gobo1(self, value: int):
-        self._gobo1 = 10*(value % self.NUM_GOBOS1)
-    
+        self._gobo1 = 10 * (value % self.NUM_GOBOS1)
+
     @property
     def gobo2(self):
         return self._gobo2 // 10
-    
+
     @gobo2.setter
     def gobo2(self, value: int):
-        self._gobo2 = 10*(value % self.NUM_GOBOS2)
-        
+        self._gobo2 = 10 * (value % self.NUM_GOBOS2)
+
     @property
     def gobo2_rotation(self):
         return self._gobo2_rotation
-    
+
     @gobo2_rotation.setter
     def gobo2_rotation(self, value: float):
         if value == 0:
             self._gobo2_rotation = 0
         elif value > 0:
-            self._gobo2_rotation = 64 + int((127-64)*value)
+            self._gobo2_rotation = 64 + int((127 - 64) * value)
         elif value < 0:
-            self._gobo2_rotation = 255 - int(65 * (value+1))
-    
+            self._gobo2_rotation = 255 - int(65 * (value + 1))
+
     @property
     def focus(self):
         return self._focus
-    
+
     @focus.setter
     def focus(self, value: float):
         self._focus = min(1.0, max(0.0, value))
-    
+
     def next_color(self):
         if self.color < 30:
             self.color += 5
-    
+
     def previous_color(self):
         if self.color >= 5:
             self.color -= 5
@@ -289,10 +303,10 @@ class HydroBeamX12(DMXDevice):
         self._phi: float = 0.0
         self._theta: float = 0.0
 
-        self._pan: int = 255//2
-        self._pan_fine: int = 255//2
-        self._tilt: float = 255//2
-        self._tilt_fine: float = 255//2
+        self._pan: int = 255 // 2
+        self._pan_fine: int = 255 // 2
+        self._tilt: float = 255 // 2
+        self._tilt_fine: float = 255 // 2
         self._color_wheel: int = 0
         self._static_gobo: int = 0
         self._prism1: int = 128
@@ -314,14 +328,14 @@ class HydroBeamX12(DMXDevice):
 
     @staticmethod
     def _theta_to_tilt(theta: float) -> float:
-        return (-4/6) / math.pi * theta + 0.5  # (DeltaY-DeltaX)*x+b = mx+b
+        return (-4 / 6) / math.pi * theta + 0.5  # (DeltaY-DeltaX)*x+b = mx+b
 
     @staticmethod
     def _encode_float_to_bytes(x) -> tuple[int, int]:
         assert 0.0 <= x <= 1.0
         n = int(round(x * 65535))
         return (n >> 8) & 0xFF, n & 0xFF
-    
+
     def set_gobo(self, value: int):
         self._static_gobo = max(0, min(255, value))
 
@@ -346,7 +360,7 @@ class HydroBeamX12(DMXDevice):
         self._pan, self._pan_fine = self._encode_float_to_bytes(pan)
 
     def set_theta(self, theta: float) -> None:
-        self._theta = min(2/3 * math.pi, max(-2/3 * math.pi, theta))
+        self._theta = min(2 / 3 * math.pi, max(-2 / 3 * math.pi, theta))
         tilt = self._theta_to_tilt(theta)
         self._tilt, self._tilt_fine = self._encode_float_to_bytes(tilt)
 
@@ -373,24 +387,28 @@ class HydroBeamX12(DMXDevice):
 
 class VaritecColorsStarbar12(DMXDevice):
     LED_COUNT = 12
-    FUNCTIONS = [int((255/64)*i)+7 for i in range(62)]
+    FUNCTIONS = [int((255 / 64) * i) + 7 for i in range(62)]
 
     def __init__(self, name: str, chan_no: int):
         super().__init__(name, chan_no, num_chans=52)
         self.intensity: float = 1.0
         self.strobe: float = 0.0
-        self.leds: list[tuple[int,int,int]] = [(0,0,0) for _ in range(self.LED_COUNT)]
+        self.leds: list[tuple[int, int, int]] = [
+            (0, 0, 0) for _ in range(self.LED_COUNT)
+        ]
         self.lights: list[int] = [0 for _ in range(self.LED_COUNT)]
         self._function: int = 7
         self.effect_speed: float = 0.5
-        
+
     @property
     def function(self):
-        return int(self._function / (255/64)) - 1
-    
+        return int(self._function / (255 / 64)) - 1
+
     @function.setter
     def function(self, value: int):
-        self._function = int(self.FUNCTIONS[value]) if 0<=value<len(self.FUNCTIONS) else 7
+        self._function = (
+            int(self.FUNCTIONS[value]) if 0 <= value < len(self.FUNCTIONS) else 7
+        )
 
     def turn_off_lights(self):
         self.lights = [0 for _ in range(self.LED_COUNT)]
@@ -406,15 +424,15 @@ class VaritecColorsStarbar12(DMXDevice):
         self.leds = [color for _ in range(self.LED_COUNT)]
         self.lights = [light for _ in range(self.LED_COUNT)]
         self.update(dmx)
-    
+
     def update(self, dmx: DMXUniverse):
         dmx.set_float(self.chan_no, 1, self.intensity)
         dmx.set_float(self.chan_no, 2, self.strobe)
         for i in range(self.LED_COUNT):
-            dmx.set_int(self.chan_no, 3 + i*4 + 0, self.leds[i][0])
-            dmx.set_int(self.chan_no, 3 + i*4 + 1, self.leds[i][1])
-            dmx.set_int(self.chan_no, 3 + i*4 + 2, self.leds[i][2])
-            dmx.set_int(self.chan_no, 3 + i*4 + 3, self.lights[i])
+            dmx.set_int(self.chan_no, 3 + i * 4 + 0, self.leds[i][0])
+            dmx.set_int(self.chan_no, 3 + i * 4 + 1, self.leds[i][1])
+            dmx.set_int(self.chan_no, 3 + i * 4 + 2, self.leds[i][2])
+            dmx.set_int(self.chan_no, 3 + i * 4 + 3, self.lights[i])
         dmx.set_int(self.chan_no, 51, self._function)
         dmx.set_float(self.chan_no, 52, self.effect_speed)
 
@@ -485,4 +503,3 @@ class RGBWLED(DMXDevice):
         dmx.set_int(self.chan_no, 2, self.g)
         dmx.set_int(self.chan_no, 3, self.b)
         dmx.set_int(self.chan_no, 4, self.w)
-

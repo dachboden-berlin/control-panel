@@ -7,15 +7,15 @@ class BananaPlugs(Sensor):
     EVENT_TYPES = {
         "PlugDisconnected": tuple[int, int],
         "PlugConnected": tuple[int, int],
-        "ConnectionsChanged": tuple[int | None, ...]
+        "ConnectionsChanged": tuple[int | None, ...],
     }
 
     def __init__(
-            self,
-            _artnet,
-            _name: str,
-            /,
-            plug_pins: Iterable[int],
+        self,
+        _artnet,
+        _name: str,
+        /,
+        plug_pins: Iterable[int],
     ) -> None:
         super().__init__(_artnet, _name)
         self._connections: list[int | None] = [None for _ in plug_pins]
@@ -53,5 +53,7 @@ class BananaPlugs(Sensor):
     def parse_trigger_payload(self, data: bytes, timestamp: float) -> None:
         assert len(data) == 2, "Data is of unexpected length"
         plug_idx, socket_idx = data
-        self._real_connections[plug_idx] = socket_idx if socket_idx != NO_CONNECTION else None
+        self._real_connections[plug_idx] = (
+            socket_idx if socket_idx != NO_CONNECTION else None
+        )
         self.connect(plug_idx, socket_idx)

@@ -22,7 +22,12 @@ def get_display_flags(fullscreen: bool, use_shaders: bool) -> int:
     return flags
 
 
-def get_output_size(resolution: tuple[int, int], fullscreen: bool, use_shaders: bool, stretch_to_fit: bool) -> tuple[int, int]:
+def get_output_size(
+    resolution: tuple[int, int],
+    fullscreen: bool,
+    use_shaders: bool,
+    stretch_to_fit: bool,
+) -> tuple[int, int]:
     """
     Determines the optimal display resolution to be passed to pygame.display.set_mode()
 
@@ -40,7 +45,9 @@ def get_output_size(resolution: tuple[int, int], fullscreen: bool, use_shaders: 
 
     if not stretch_to_fit:
         return (
-            scale_resolution(resolution, (pg.display.Info().current_w, pg.display.Info().current_h))
+            scale_resolution(
+                resolution, (pg.display.Info().current_w, pg.display.Info().current_h)
+            )
             if use_shaders
             else resolution
         )
@@ -52,7 +59,9 @@ def get_output_size(resolution: tuple[int, int], fullscreen: bool, use_shaders: 
     )
 
 
-def scale_resolution(input_resolution: tuple[int, int], target_resolution: tuple[int, int]) -> tuple[int, int]:
+def scale_resolution(
+    input_resolution: tuple[int, int], target_resolution: tuple[int, int]
+) -> tuple[int, int]:
     """
     Scales an input resolution to fit into a target resolution while maintaining the aspect ratio.
 

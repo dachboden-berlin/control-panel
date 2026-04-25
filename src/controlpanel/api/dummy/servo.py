@@ -6,15 +6,16 @@ import struct
 
 
 class Servo(Fixture):
-    def __init__(self,
-                 _artnet: ArtNet,
-                 _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
-                 _name: str,
-                 /,
-                 *,
-                 universe: int | None = None,
-                 ) -> None:
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _loop: asyncio.AbstractEventLoop,
+        _esp: ESP32,
+        _name: str,
+        /,
+        *,
+        universe: int | None = None,
+    ) -> None:
         super().__init__(_artnet, _loop, _esp, _name, universe=universe)
         self._current_angle: float = 0.001
 
@@ -23,7 +24,7 @@ class Servo(Fixture):
         self.send_dmx()
 
     def send_dmx(self) -> None:
-        self._send_dmx_packet(struct.pack('f', self._current_angle))
+        self._send_dmx_packet(struct.pack("f", self._current_angle))
 
     def blackout(self) -> None:
         pass

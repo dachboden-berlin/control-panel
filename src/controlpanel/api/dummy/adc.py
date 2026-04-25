@@ -10,12 +10,13 @@ class ADC(Sensor):
     }
 
     def __init__(
-            self,
-            _artnet: ArtNet,
-            _name: str,
-            map_range: tuple[float, float] | None = None,  # normalize incoming values to a range a..b
-            clamp: bool = True,
-            rolling_average_size: int | None = None,
+        self,
+        _artnet: ArtNet,
+        _name: str,
+        map_range: tuple[float, float]
+        | None = None,  # normalize incoming values to a range a..b
+        clamp: bool = True,
+        rolling_average_size: int | None = None,
     ) -> None:
         super().__init__(_artnet, _name)
         self._value: float = 0.0
@@ -25,7 +26,11 @@ class ADC(Sensor):
 
         self.map_range: tuple[float, float] | None = map_range
         self._clamp: bool = clamp
-        self._rolling_average_deque: deque[float] | None = deque(maxlen=rolling_average_size) if (rolling_average_size and rolling_average_size > 1) else None
+        self._rolling_average_deque: deque[float] | None = (
+            deque(maxlen=rolling_average_size)
+            if (rolling_average_size and rolling_average_size > 1)
+            else None
+        )
 
     @property
     def desynced(self) -> bool:
@@ -39,7 +44,7 @@ class ADC(Sensor):
     def value(self, value: float) -> None:
         value = min(1.0, max(0.0, value))
         self._value = value
-        self._raw_value = int(value * (2 ** 16 - 1))
+        self._raw_value = int(value * (2**16 - 1))
         self._fire_event("ValueRead", value)
 
     @property
@@ -48,9 +53,9 @@ class ADC(Sensor):
 
     @raw_value.setter
     def raw_value(self, value: int) -> None:
-        assert 0 <= value < 2 ** 16, f"{value} is outside the range of u16 integer"
+        assert 0 <= value < 2**16, f"{value} is outside the range of u16 integer"
         self._raw_value = value
-        self._value = value/(2**16-1)
+        self._value = value / (2**16 - 1)
         self._fire_event("ValueRead", self._value)
 
     def parse_trigger_payload(self, data: bytes, timestamp: float) -> None:
@@ -58,10 +63,12 @@ class ADC(Sensor):
         real_raw_value = struct.unpack(">H", data)[0]
         self._raw_value = self._real_raw_value = real_raw_value
 
-        decoded = real_raw_value/(2**16-1)  # range 0..1
+        decoded = real_raw_value / (2**16 - 1)  # range 0..1
 
         if self.map_range is not None:
-            mapped = (decoded - self.map_range[0]) / (self.map_range[1]-self.map_range[0])
+            mapped = (decoded - self.map_range[0]) / (
+                self.map_range[1] - self.map_range[0]
+            )
             if self._clamp:
                 mapped = max(0.0, min(1.0, mapped))
         else:
@@ -69,7 +76,9 @@ class ADC(Sensor):
 
         if self._rolling_average_deque is not None:
             self._rolling_average_deque.append(mapped)
-            average = sum(self._rolling_average_deque) / len(self._rolling_average_deque)
+            average = sum(self._rolling_average_deque) / len(
+                self._rolling_average_deque
+            )
         else:
             average = mapped
 

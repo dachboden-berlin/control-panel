@@ -10,7 +10,10 @@ from .esp32 import ESP32
 class _Pixels:
     """A proxy class for the pixel list.
     Automatically calls the update_callback function when a value in the list is changed."""
-    def __init__(self, pixels: list[tuple[int, int, int]], update_callback: Callable[[], None]):
+
+    def __init__(
+        self, pixels: list[tuple[int, int, int]], update_callback: Callable[[], None]
+    ):
         self._pixels: list[tuple[int, int, int]] = pixels
         self._update_callback: Callable[[], None] = update_callback
 
@@ -42,26 +45,34 @@ class _Pixels:
 
 
 class LEDStrip(BaseLEDStrip, Fixture):
-    ANIMATIONS: dict[str, Callable[[float, bytearray, tuple[int, int, int]], Generator[None, None, None]]] = {
-        animation.__name__: animation for animation in BaseLEDStrip.ANIMATIONS if animation is not None
+    ANIMATIONS: dict[
+        str,
+        Callable[[float, bytearray, tuple[int, int, int]], Generator[None, None, None]],
+    ] = {
+        animation.__name__: animation
+        for animation in BaseLEDStrip.ANIMATIONS
+        if animation is not None
     }
 
-    def __init__(self,
-                 _artnet: ArtNet,
-                 _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
-                 _name: str,
-                 /,
-                 length: int,
-                 *,
-                 universe: int | None =None,
-                 rgb_order: Literal["RGB", "RBG", "GRB", "GBR", "BRG", "BGR"] = "RGB",
-                 use_compression: bool = False,
-                 refresh_rate_hz: float = 30.0,
-                 ) -> None:
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _loop: asyncio.AbstractEventLoop,
+        _esp: ESP32,
+        _name: str,
+        /,
+        length: int,
+        *,
+        universe: int | None = None,
+        rgb_order: Literal["RGB", "RBG", "GRB", "GBR", "BRG", "BGR"] = "RGB",
+        use_compression: bool = False,
+        refresh_rate_hz: float = 30.0,
+    ) -> None:
         BaseLEDStrip.__init__(self, rgb_order)
         Fixture.__init__(self, _artnet, _loop, _esp, _name, universe=universe)
-        self._pixel_proxy: _Pixels = _Pixels([(0, 0, 0) for _ in range(length)], self._send_pixel_data)
+        self._pixel_proxy: _Pixels = _Pixels(
+            [(0, 0, 0) for _ in range(length)], self._send_pixel_data
+        )
         self._use_compression: bool = use_compression
 
         self._animation_index: int | None = None
@@ -76,7 +87,9 @@ class LEDStrip(BaseLEDStrip, Fixture):
         else:
             self._send_animation_data()
 
-    def _parse_animation_name_or_index(self, animation_name_or_index: str | int | None) -> int | None:
+    def _parse_animation_name_or_index(
+        self, animation_name_or_index: str | int | None
+    ) -> int | None:
         if isinstance(animation_name_or_index, str):
             animation = self.ANIMATIONS.get(animation_name_or_index)
             if not animation:
@@ -93,22 +106,25 @@ class LEDStrip(BaseLEDStrip, Fixture):
 
     def _pack_animation_bytes(self) -> bytes:
         return struct.pack(
-            'BBB' + 'BBB' + 'BBB',  # format: 3 single-byte ints + 2 RGB tuples
+            "BBB" + "BBB" + "BBB",  # format: 3 single-byte ints + 2 RGB tuples
             self._animation_index + 1 if self._animation_index is not None else 0,
             self.encode_update_rate(self._refresh_rate_hz),
             self.encode_update_rate(self._animation_speed),
             *self._primary_animation_color,
-            *self._secondary_animation_color
+            *self._secondary_animation_color,
         )
 
-    def set_animation(self,
-                      animation_name_or_index: str | int | None,
-                      refresh_rate_hz: float,
-                      animation_speed: float,
-                      primary_color: tuple[int, int, int],
-                      secondary_color: tuple[int, int, int],
-                      ) -> None:
-        self._animation_index = self._parse_animation_name_or_index(animation_name_or_index)
+    def set_animation(
+        self,
+        animation_name_or_index: str | int | None,
+        refresh_rate_hz: float,
+        animation_speed: float,
+        primary_color: tuple[int, int, int],
+        secondary_color: tuple[int, int, int],
+    ) -> None:
+        self._animation_index = self._parse_animation_name_or_index(
+            animation_name_or_index
+        )
         self._refresh_rate_hz = refresh_rate_hz
         self._animation_speed = animation_speed
         self._primary_animation_color = primary_color
@@ -135,13 +151,21 @@ class LEDStrip(BaseLEDStrip, Fixture):
         self._send_dmx_packet(self._pack_animation_bytes())
 
     def _reorder_rgb(self, rgb: tuple[int, int, int]) -> tuple[int, int, int]:
-        return rgb[self._rgb_mapping[0]], rgb[self._rgb_mapping[1]], rgb[self._rgb_mapping[2]]
+        return (
+            rgb[self._rgb_mapping[0]],
+            rgb[self._rgb_mapping[1]],
+            rgb[self._rgb_mapping[2]],
+        )
 
     def _pack_pixel_bytes(self) -> bytes:
         if not self._use_compression:
-            return b"\x00" + bytes(value for rgb in self._pixel_proxy for value in self._reorder_rgb(rgb))
+            return b"\x00" + bytes(
+                value for rgb in self._pixel_proxy for value in self._reorder_rgb(rgb)
+            )
         else:
-            return b"\x00" + bytes(self._compress_rgb(self._reorder_rgb(rgb)) for rgb in self._pixel_proxy)
+            return b"\x00" + bytes(
+                self._compress_rgb(self._reorder_rgb(rgb)) for rgb in self._pixel_proxy
+            )
 
     def __len__(self):
         return len(self._pixel_proxy)
@@ -166,12 +190,24 @@ class LEDStrip(BaseLEDStrip, Fixture):
         if len(new_pixels) != len(self):
             raise ValueError(f"Pixel list must be exactly {len(self)} items long.")
         if not all(
-                isinstance(rgb, tuple) and len(rgb) == 3 and all(0 <= val <= 255 for val in rgb) for rgb in new_pixels):
-            raise ValueError("Each pixel must be a tuple of three integers between 0 and 255.")
-        self._pixel_proxy[:] = new_pixels  # Update the existing Pixels proxy in-place so references don't break
+            isinstance(rgb, tuple)
+            and len(rgb) == 3
+            and all(0 <= val <= 255 for val in rgb)
+            for rgb in new_pixels
+        ):
+            raise ValueError(
+                "Each pixel must be a tuple of three integers between 0 and 255."
+            )
+        self._pixel_proxy[:] = (
+            new_pixels  # Update the existing Pixels proxy in-place so references don't break
+        )
 
     def set_pixel(self, pixel: SupportsIndex, rgb: tuple[int, int, int]):
-        assert isinstance(rgb, tuple) and len(rgb) == 3 and all(0 <= val <= 255 for val in rgb), "Invalid rgb tuple"
+        assert (
+            isinstance(rgb, tuple)
+            and len(rgb) == 3
+            and all(0 <= val <= 255 for val in rgb)
+        ), "Invalid rgb tuple"
         self._pixel_proxy[pixel] = rgb
         self._send_pixel_data()
 

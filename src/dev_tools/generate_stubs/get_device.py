@@ -5,7 +5,9 @@ from . import DEVICE_MANIFEST_PATH
 from controlpanel.api.commons import NodeConfig
 
 
-STUB_PATH = Path(importlib.util.find_spec("controlpanel.api").origin).parent / "get_device.pyi"
+STUB_PATH = (
+    Path(importlib.util.find_spec("controlpanel.api").origin).parent / "get_device.pyi"
+)
 
 
 def generate_get_device_stub_file() -> None:
@@ -36,7 +38,7 @@ from controlpanel.api.dummy import *
 
 '''
 
-    footer = f"""
+    footer = """
 def get_device(device_name: str) -> Device: ...
 """
 

@@ -1,32 +1,42 @@
 import json
 from pathlib import Path
 import importlib.util
-from types import ModuleType, GenericAlias
+from types import ModuleType
 from . import DEVICE_MANIFEST_PATH
 import inspect
 from typing import Dict, Set, Tuple, FrozenSet, get_origin, get_args, Literal
 from controlpanel.api.commons import NodeConfig
 
 
-STUB_PATH = Path(importlib.util.find_spec("controlpanel.api").origin).parent / "callback.pyi"
+STUB_PATH = (
+    Path(importlib.util.find_spec("controlpanel.api").origin).parent / "callback.pyi"
+)
 
 
 def collect_dummy_libs() -> list[ModuleType]:
     """Collects all the modules and packages that may contain classes that are interesting to us"""
     from controlpanel.api import dummy
-    return [dummy, ]
+
+    return [
+        dummy,
+    ]
 
 
-def collect_classes_from_libs(libs: list[ModuleType], *, filter_by_base_class: type | None = None) -> list[type]:
+def collect_classes_from_libs(
+    libs: list[ModuleType], *, filter_by_base_class: type | None = None
+) -> list[type]:
     def is_strict_subclass(cls: type, base_class: type) -> bool:
         return issubclass(cls, filter_by_base_class) and cls is not base_class
+
     collected_classes: list[type] = []
     for lib in libs:
         # Iterate over members of the module
         for name, obj in inspect.getmembers(lib, inspect.isclass):
             # Ensure the class is defined in the module (to avoid inherited ones from imports)
             # Check if obj is subclass of base_class but not the base_class itself
-            if filter_by_base_class and not is_strict_subclass(obj, filter_by_base_class):
+            if filter_by_base_class and not is_strict_subclass(
+                obj, filter_by_base_class
+            ):
                 continue
             collected_classes.append(obj)
     return collected_classes
@@ -37,7 +47,9 @@ def get_device_names_classnames() -> dict[str, str]:
         data: dict[str, NodeConfig] = json.load(f)
     device_names: dict[str, str] = dict()
     for node_config in data.values():
-        for device_name, (class_name, phys_kwargs, dummy_kwargs) in node_config["devices"].items():
+        for device_name, (class_name, phys_kwargs, dummy_kwargs) in node_config[
+            "devices"
+        ].items():
             if device_name in device_names.keys():
                 raise ValueError(f"Duplicate device name found: {device_name}")
             device_names[device_name] = class_name
@@ -72,15 +84,27 @@ def get_device_dict() -> dict[str, dict[str, str]]:
     device_names_classnames: dict[str, str] = get_device_names_classnames()
 
     from controlpanel.api.dummy import Sensor
-    dummy_sensor_classes: list[type] = collect_classes_from_libs(collect_dummy_libs(), filter_by_base_class=Sensor)
-    dummy_sensor_class_mapping: dict[str, type] = {cls.__name__: cls for cls in dummy_sensor_classes}
 
-    sensor_names: dict[str, str] = {name: class_name for name, class_name in device_names_classnames.items() if class_name in dummy_sensor_class_mapping.keys()}
+    dummy_sensor_classes: list[type] = collect_classes_from_libs(
+        collect_dummy_libs(), filter_by_base_class=Sensor
+    )
+    dummy_sensor_class_mapping: dict[str, type] = {
+        cls.__name__: cls for cls in dummy_sensor_classes
+    }
+
+    sensor_names: dict[str, str] = {
+        name: class_name
+        for name, class_name in device_names_classnames.items()
+        if class_name in dummy_sensor_class_mapping.keys()
+    }
 
     for sensor_name, sensor_class_name in sensor_names.items():
         sensor_class = dummy_sensor_class_mapping[sensor_class_name]
         event_types = getattr(sensor_class, "EVENT_TYPES")
-        result[sensor_name] = {action_name: simple_type_name(value_type) for action_name, value_type in event_types.items()}
+        result[sensor_name] = {
+            action_name: simple_type_name(value_type)
+            for action_name, value_type in event_types.items()
+        }
 
     return result
 
@@ -130,7 +154,8 @@ def generate_overloads(devices: Dict[str, Dict[str, str]]) -> str:
         lines.append("    fire_once: bool = False,")
         lines.append("    allow_parallelism: bool = False,")
         lines.append(
-            f") -> Callable[[Callable[[Event[{base_value_type}]], None]], Callable[[Event[{base_value_type}]], None]]: ...")
+            f") -> Callable[[Callable[[Event[{base_value_type}]], None]], Callable[[Event[{base_value_type}]], None]]: ..."
+        )
         lines.append("")
     return "\n".join(lines)
 
@@ -144,6 +169,7 @@ from controlpanel.api import Event
 
     pyi_content = header + generate_overloads(get_device_dict())
     Path(STUB_PATH).write_text(pyi_content)
+
 
 if __name__ == "__main__":
     generate_callback_stub_file()

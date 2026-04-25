@@ -5,8 +5,8 @@ def red_strobe(t: float) -> tuple[int, ...]:
 
 
 def starbar_strobe1(t: float) -> tuple[int, ...]:
-    return (255, 0, 0, 255) if (t*2) % 2 < 1 else (255, 0, 0, 0)
+    return (255, 0, 0, 255) if (t * 2) % 2 < 1 else (255, 0, 0, 0)
 
 
 def starbar_strobe2(t: float) -> tuple[int, ...]:
-    return (255, 0, 0, 0) if (t*2) % 2 < 1 else (255, 0, 0, 255)
+    return (255, 0, 0, 0) if (t * 2) % 2 < 1 else (255, 0, 0, 255)

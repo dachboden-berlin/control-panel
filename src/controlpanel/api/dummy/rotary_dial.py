@@ -15,14 +15,28 @@ class RotaryDial(Sensor):
         "SequenceEntered": tuple[int, ...],
     }
 
-    def __init__(self, _artnet: ArtNet, _name: str, /, *, confirmation_time_seconds: float = 3.0, max_digits: int = 8):
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _name: str,
+        /,
+        *,
+        confirmation_time_seconds: float = 3.0,
+        max_digits: int = 8,
+    ):
         super().__init__(_artnet, _name)
         self._last_digit: DigitType | None = None
         self._last_digit_time: float = 0.0
         self._confirmation_time_seconds: float = confirmation_time_seconds
         self._max_digits: int = max_digits
         self._entered_sequence: list[DigitType] = []
-        api.subscribe(self._wait_for_confirmation, self._name, "DigitEntered", None, allow_parallelism=True)
+        api.subscribe(
+            self._wait_for_confirmation,
+            self._name,
+            "DigitEntered",
+            None,
+            allow_parallelism=True,
+        )
 
     @property
     def desynced(self) -> bool:

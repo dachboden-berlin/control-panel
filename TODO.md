@@ -1,0 +1,7 @@
+- add unit tests / integration tests
+- replace os.path with pathlib
+- check typing (ty)
+- extend pre-commit hooks
+- run pytests pre-push?
+- add logging instead of print
+- add exception handling

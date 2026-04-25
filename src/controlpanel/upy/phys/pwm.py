@@ -6,15 +6,15 @@ import struct
 
 class PWM(Fixture):
     def __init__(
-            self,
-            _context: tuple[ArtNet, machine.SoftSPI, machine.I2C],
-            _name: str,
-            pin: int,
-            *,
-            universe: int | None = None,
-            intensity: float = 0.5,
-            freq: int = 512,
-        ) -> None:
+        self,
+        _context: tuple[ArtNet, machine.SoftSPI, machine.I2C],
+        _name: str,
+        pin: int,
+        *,
+        universe: int | None = None,
+        intensity: float = 0.5,
+        freq: int = 512,
+    ) -> None:
         super().__init__(_context[0], _name, update_rate_hz=0.0, universe=universe)
         self.pin = machine.Pin(pin)
         self.pwm = machine.PWM(self.pin)

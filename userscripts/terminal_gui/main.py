@@ -6,12 +6,31 @@ GUI_GAP = 8
 
 class TerminalGUI(WindowManager):
     def __init__(self):
-        super().__init__('TerminalGUI')
+        super().__init__("TerminalGUI")
         width = self.screen.get_width()
         height = self.screen.get_height()
         self.create_new_desktop("GUI", make_selected=True)
-        self.desktop.add_element(widgets.Terminal("Terminal", self.desktop, x=GUI_GAP, y=GUI_GAP, w=width // 2 - GUI_GAP, h=height - 2 * GUI_GAP))
-        self.desktop.add_element(stl:=widgets.STLRenderer("ControlPanelAnim", self.desktop, "controlpanel.stl", x=width // 2 + GUI_GAP//2, y=GUI_GAP, w=width//2 - GUI_GAP, h=height - 2 * GUI_GAP))
+        self.desktop.add_element(
+            widgets.Terminal(
+                "Terminal",
+                self.desktop,
+                x=GUI_GAP,
+                y=GUI_GAP,
+                w=width // 2 - GUI_GAP,
+                h=height - 2 * GUI_GAP,
+            )
+        )
+        self.desktop.add_element(
+            stl := widgets.STLRenderer(
+                "ControlPanelAnim",
+                self.desktop,
+                "controlpanel.stl",
+                x=width // 2 + GUI_GAP // 2,
+                y=GUI_GAP,
+                w=width // 2 - GUI_GAP,
+                h=height - 2 * GUI_GAP,
+            )
+        )
         stl.camera.rotate_up_down(30)
         stl.camera.zoom *= 0.75
         return

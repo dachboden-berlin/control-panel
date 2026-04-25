@@ -11,18 +11,20 @@ _DEFAULT_POLLING_RATE_HZ: float = const(0.0)
 
 class Button(Sensor):
     def __init__(
-            self,
-            _context: tuple[ArtNet, SoftSPI, I2C],
-            _name: str,
-            pin: int,
-            *,
-            invert: bool = False,
-            polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
-            software_debounce_ms: int | None = _DEFAULT_SOFTWARE_DEBOUNCE,
+        self,
+        _context: tuple[ArtNet, SoftSPI, I2C],
+        _name: str,
+        pin: int,
+        *,
+        invert: bool = False,
+        polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
+        software_debounce_ms: int | None = _DEFAULT_SOFTWARE_DEBOUNCE,
     ) -> None:
         super().__init__(_context[0], _name, polling_rate_hz=polling_rate_hz)
         self.pin = Pin(pin, Pin.IN, Pin.PULL_UP)
-        self.pin.irq(trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._handle_interrupt)
+        self.pin.irq(
+            trigger=Pin.IRQ_FALLING | Pin.IRQ_RISING, handler=self._handle_interrupt
+        )
         self._invert = invert
         self._previous_state: bool = self.get_pressed()
         self._software_debounce_ms = software_debounce_ms
@@ -35,9 +37,17 @@ class Button(Sensor):
         value = pin.value() ^ self._invert
         if not self._software_debounce_ms:
             pass
-        elif value == 1 and ticks_diff(current_time, self._last_release_time) > self._software_debounce_ms:
+        elif (
+            value == 1
+            and ticks_diff(current_time, self._last_release_time)
+            > self._software_debounce_ms
+        ):
             self._last_release_time = current_time
-        elif value == 0 and ticks_diff(current_time, self._last_press_time) > self._software_debounce_ms:
+        elif (
+            value == 0
+            and ticks_diff(current_time, self._last_press_time)
+            > self._software_debounce_ms
+        ):
             self._last_press_time = current_time
         else:
             return

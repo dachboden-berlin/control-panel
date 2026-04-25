@@ -7,7 +7,6 @@ from controlpanel.upy.phys import Fixture, Sensor
 from controlpanel.shared.compatibility import Callable
 import time
 import uasyncio as asyncio
-import network
 import webrepl
 
 
@@ -28,19 +27,25 @@ class Node:
         self._i2c: I2C | None = self._instantiate_i2c(manifest)
         self.devices: dict[str, Device] = self._instantiate_devices(manifest)
         self.universes: dict[int, Fixture] = {
-            device.universe: device for device in self.devices.values() if isinstance(device, Fixture)
+            device.universe: device
+            for device in self.devices.values()
+            if isinstance(device, Fixture)
         }
         self.fixtures: dict[str, Fixture] = {
-            device.name: device for device in self.devices.values() if isinstance(device, Fixture)
+            device.name: device
+            for device in self.devices.values()
+            if isinstance(device, Fixture)
         }
         self.sensors: dict[str, Sensor] = {
-            device.name: device for device in self.devices.values() if isinstance(device, Sensor)
+            device.name: device
+            for device in self.devices.values()
+            if isinstance(device, Sensor)
         }
 
         self._update_devices: bool = True
 
     def _parse_manifest(self) -> dict[str, dict]:
-        manifest = utils.load_json('controlpanel/shared/device_manifest.json')
+        manifest = utils.load_json("controlpanel/shared/device_manifest.json")
         if not manifest:
             return {}
         return manifest.get(self._name, {})
@@ -75,7 +80,9 @@ class Node:
         for device_name, (class_name, kwargs, _) in device_config.items():
             cls: type = getattr(phys, class_name)
             try:
-                device: Device = cls((self._artnet, self._spi, self._i2c), device_name, **kwargs)
+                device: Device = cls(
+                    (self._artnet, self._spi, self._i2c), device_name, **kwargs
+                )
                 devices[device.name] = device
             except Exception as e:
                 print(f"Failed to instantiate device '{device_name}', logging...")
@@ -111,14 +118,15 @@ class Node:
                 attempt += 1
                 utils.INTERFACE.disconnect()
                 if attempt >= retries:
-                    print("Max number of retries reached! Creating AP and stopping watchdog.")
+                    print(
+                        "Max number of retries reached! Creating AP and stopping watchdog."
+                    )
                     utils.INTERFACE = utils.create_ap()
                     webrepl.start()
                     break
                 print(f"We are not connected! Trying to reconnect, attempt #{attempt}")
                 utils.INTERFACE.connect()
             await asyncio.sleep_ms(sleep_ms)
-
 
     def artcmd_callback(self, op_code: OpCode, ip: str, port: int, reply):
         command = reply.get("Command")
@@ -146,11 +154,15 @@ class Node:
 
     async def delayed_reply_to_artpoll(self, ip: str, port: int):
         from random import randint
-        await asyncio.sleep_ms(randint(0, 1000))  # ArtNet 4 standard specifies a random delay of up to 1s
-        self._artnet.send_poll_reply(ip=utils.get_local_ip(),
-                                     port=self._artnet.port,
-                                     address=(ip, port),
-                                     short_name=self._name,
-                                     long_name="Control Panel ESP32 Node: " + self._name,
-                                     mac=utils.get_mac_address(),
-                                     )
+
+        await asyncio.sleep_ms(
+            randint(0, 1000)
+        )  # ArtNet 4 standard specifies a random delay of up to 1s
+        self._artnet.send_poll_reply(
+            ip=utils.get_local_ip(),
+            port=self._artnet.port,
+            address=(ip, port),
+            short_name=self._name,
+            long_name="Control Panel ESP32 Node: " + self._name,
+            mac=utils.get_mac_address(),
+        )

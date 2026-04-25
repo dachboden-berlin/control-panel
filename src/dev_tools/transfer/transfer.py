@@ -38,10 +38,7 @@ def get_included_files(base_path: Path) -> list[Path]:
             rel_path = entry.relative_to(base_path)
 
             # Check against all active ignore specs
-            ignored = any(
-                s.match_file(rel_path.as_posix())
-                for s in specs
-            )
+            ignored = any(s.match_file(rel_path.as_posix()) for s in specs)
 
             if ignored:
                 continue
@@ -87,7 +84,7 @@ def build_structure_from_files(files: list[Path], base_path: Path) -> NestedList
 
 
 def create_structure(ws: webrepl.WebSocket, structure: NestedList) -> None:
-    webrepl.run_webrepl_cmd(ws, f'import os')
+    webrepl.run_webrepl_cmd(ws, "import os")
     for folder_name, subfolders in structure:
         webrepl.run_webrepl_cmd(ws, f'os.mkdir("{folder_name}")')
         webrepl.run_webrepl_cmd(ws, f'os.chdir("{folder_name}")')
@@ -96,21 +93,46 @@ def create_structure(ws: webrepl.WebSocket, structure: NestedList) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description='Control Panel File Transfer Tool')
-    parser.add_argument("hostname", help="The name of the device to send the files to, and to store checksums under.")
-    parser.add_argument("--path", type=str, default=None, help="Optional: the files to transfer. Default is all in CWD.")
+    parser = argparse.ArgumentParser(description="Control Panel File Transfer Tool")
+    parser.add_argument(
+        "hostname",
+        help="The name of the device to send the files to, and to store checksums under.",
+    )
+    parser.add_argument(
+        "--path",
+        type=str,
+        default=None,
+        help="Optional: the files to transfer. Default is all in CWD.",
+    )
     parser.add_argument("--IP", help="IP override")
-    parser.add_argument("--timeout", type=float, default=30.0, help="The duration of the socket timeout. Default is 30.")
-    parser.add_argument('-f', '--force', action='store_true', help='Ignore the checksums.')
-    parser.add_argument('--password', type=str, help='The webrepl password.', required=True)
-    parser.add_argument("--transfer-files-only", action='store_true', help="Only transfer files, don't create folder structure.")
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=30.0,
+        help="The duration of the socket timeout. Default is 30.",
+    )
+    parser.add_argument(
+        "-f", "--force", action="store_true", help="Ignore the checksums."
+    )
+    parser.add_argument(
+        "--password", type=str, help="The webrepl password.", required=True
+    )
+    parser.add_argument(
+        "--transfer-files-only",
+        action="store_true",
+        help="Only transfer files, don't create folder structure.",
+    )
     args = parser.parse_args()
 
     hostname: str = args.hostname
     path = Path(args.path) if args.path else SRC_PATH
 
     all_files = get_included_files(path)
-    changed_files: list[Path] = list(filter(lambda f: file_has_changed(str(f), hostname), all_files)) if not args.force else all_files
+    changed_files: list[Path] = (
+        list(filter(lambda f: file_has_changed(str(f), hostname), all_files))
+        if not args.force
+        else all_files
+    )
 
     if not changed_files:
         print(f"Device '{hostname}' is up to date!")
@@ -147,13 +169,24 @@ def main() -> None:
     print("Transferring files... ")
     for file in changed_files:
         local_file = str(file)
-        remote_file = str(file).replace("\\", "/") if file.name not in {"main.py", "boot.py", "credentials.json", "utils.py", "hostname_manifest.json"} else file.name
+        remote_file = (
+            str(file).replace("\\", "/")
+            if file.name
+            not in {
+                "main.py",
+                "boot.py",
+                "credentials.json",
+                "utils.py",
+                "hostname_manifest.json",
+            }
+            else file.name
+        )
         webrepl.webrepl_put(ws, local_file, remote_file)
         update_checksum(local_file, hostname)
     print("Files transferred!")
 
     try:
-        webrepl.run_webrepl_cmd(ws, 'import machine; machine.reset()')
+        webrepl.run_webrepl_cmd(ws, "import machine; machine.reset()")
     except (TimeoutError, ConnectionResetError):
         pass
 
