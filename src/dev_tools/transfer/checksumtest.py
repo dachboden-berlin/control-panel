@@ -29,18 +29,20 @@ def load_checksums(storage_path):
 
 
 def update_checksum(file, esp_name):
-    """Update the checksum of a specified file."""   
-    checksums_storage_path = os.path.join(script_dir, f"controlpanel-{esp_name}-checksums.json")
-    
+    """Update the checksum of a specified file."""
+    checksums_storage_path = os.path.join(
+        script_dir, f"controlpanel-{esp_name}-checksums.json"
+    )
+
     # Load existing checksums
     checksums = load_checksums(checksums_storage_path)
-    
+
     # Calculate new checksum
     new_checksum = calculate_checksum(file)
-    
+
     # Update the checksum in the dictionary
     checksums[file] = new_checksum
-    
+
     # Save the updated checksums
     save_checksums(checksums, checksums_storage_path)
 
@@ -48,8 +50,10 @@ def update_checksum(file, esp_name):
 
 
 def file_has_changed(path_to_file, esp_name):
-    checksums_storage_path = os.path.join(script_dir, f"controlpanel-{esp_name}-checksums.json")
-    
+    checksums_storage_path = os.path.join(
+        script_dir, f"controlpanel-{esp_name}-checksums.json"
+    )
+
     # Load existing checksums from storage
     checksums = load_checksums(checksums_storage_path)
 

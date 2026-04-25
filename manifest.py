@@ -8,14 +8,19 @@ ROOT = Path("/root/control-panel/controlpanel")
 # Folders to include in the build
 INCLUDE_DIRS = ["shared", "upy"]
 
-ROOT_FILES = {"boot.py", "main.py", "utils.py"}  # These files are getting put in the "root" on the mpy file system
+ROOT_FILES = {
+    "boot.py",
+    "main.py",
+    "utils.py",
+}  # These files are getting put in the "root" on the mpy file system
 
 
 def list_py_files(folder: Path) -> list[str]:
     """Return all .py files within a folder, relative to ROOT."""
     return [
         str(path.relative_to(ROOT)).replace("\\", "/")
-        for path in folder.rglob("*.py") if path.name not in ROOT_FILES
+        for path in folder.rglob("*.py")
+        if path.name not in ROOT_FILES
     ]
 
 

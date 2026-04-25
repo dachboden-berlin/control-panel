@@ -34,20 +34,20 @@ def run_lint(code: str) -> list[dict]:
         try:
             tree = ast.parse(code, filename=filename)
         except SyntaxError as e:
-            return [{
-                "line": e.lineno or 0,
-                "column": e.offset or 0,
-                "message": f"SyntaxError: {e.msg}"
-            }]
+            return [
+                {
+                    "line": e.lineno or 0,
+                    "column": e.offset or 0,
+                    "message": f"SyntaxError: {e.msg}",
+                }
+            ]
 
         # Step 2: Run checker
-        checker = RestrictedPythonChecker(tree=tree, filename=filename, always_check=True)
+        checker = RestrictedPythonChecker(
+            tree=tree, filename=filename, always_check=True
+        )
         for lineno, col_offset, message, _ in checker.run():
-            issues.append({
-                "line": lineno,
-                "column": col_offset,
-                "message": message
-            })
+            issues.append({"line": lineno, "column": col_offset, "message": message})
 
     return issues
 
@@ -58,8 +58,7 @@ async def index(request: Request):
     cls = request.cookies.get("upload_class", "")
 
     response = templates.TemplateResponse(
-        "index.html",
-        {"request": request, "message": msg, "message_class": cls}
+        "index.html", {"request": request, "message": msg, "message_class": cls}
     )
 
     if msg:
@@ -79,17 +78,14 @@ async def lint(code: str = Form(...)):
 
 
 @app.post("/upload")
-async def upload(
-    filename: str = Form(...),
-    code: str = Form(...)
-):
+async def upload(filename: str = Form(...), code: str = Form(...)):
     code = code.replace("\r\n", "\n").replace("\r", "\n")
 
     issues = run_lint(code)
     if issues:
         return {
             "status": "error",
-            "message": "Upload failed: Code did not pass linting."
+            "message": "Upload failed: Code did not pass linting.",
         }
 
     final_name = Path(filename).stem + ".py"
@@ -98,12 +94,9 @@ async def upload(
     if target_path.exists():
         return {
             "status": "error",
-            "message": f"Upload failed: '{final_name}' already exists."
+            "message": f"Upload failed: '{final_name}' already exists.",
         }
 
     target_path.write_text(code, encoding="utf-8")
 
-    return {
-        "status": "success",
-        "message": f"Upload successful ({final_name})"
-    }
+    return {"status": "success", "message": f"Upload successful ({final_name})"}

@@ -5,16 +5,17 @@ from .esp32 import ESP32
 
 
 class DigitalPin(Fixture):
-    def __init__(self,
-                 _artnet: ArtNet,
-                 _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
-                 _name: str,
-                 /,
-                 *,
-                 universe: int | None = None,
-                 invert: bool = False,
-                 ) -> None:
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _loop: asyncio.AbstractEventLoop,
+        _esp: ESP32,
+        _name: str,
+        /,
+        *,
+        universe: int | None = None,
+        invert: bool = False,
+    ) -> None:
         super().__init__(_artnet, _loop, _esp, _name, universe=universe)
         self._state: bool = False
 

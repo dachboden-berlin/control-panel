@@ -5,16 +5,17 @@ from .esp32 import ESP32
 
 
 class CompositePWM(Fixture):
-    def __init__(self,
-                 _artnet: ArtNet,
-                 _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
-                 _name: str,
-                 /,
-                 *,
-                 color: tuple[int, int, int] = (50, 50, 50),
-                 universe: int | None = None,
-                 ) -> None:
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _loop: asyncio.AbstractEventLoop,
+        _esp: ESP32,
+        _name: str,
+        /,
+        *,
+        color: tuple[int, int, int] = (50, 50, 50),
+        universe: int | None = None,
+    ) -> None:
         super().__init__(_artnet, _loop, _esp, _name, universe=universe)
         self._color = color
 

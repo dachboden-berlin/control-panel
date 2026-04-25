@@ -11,19 +11,23 @@ _DEFAULT_UPDATE_RATE_HZ = const(2.0)  # for SIPO
 
 
 class PisoShiftRegister(Sensor):
-    def __init__(self,
-                 _context: tuple[ArtNet, SoftSPI, I2C],
-                 _name: str,
-                 latch: int,
-                 count: int = 1,
-                 *,
-                 polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
-                 ) -> None:
+    def __init__(
+        self,
+        _context: tuple[ArtNet, SoftSPI, I2C],
+        _name: str,
+        latch: int,
+        count: int = 1,
+        *,
+        polling_rate_hz: float = _DEFAULT_POLLING_RATE_HZ,
+    ) -> None:
         super().__init__(_context[0], _name, polling_rate_hz)
         self._spi: SoftSPI = _context[1]
         self._latch_pin: Pin = Pin(latch, Pin.OUT)
         self._count = count
-        self._buffers = [bytearray(self._count), bytearray(self._count)]  # Two alternating buffers
+        self._buffers = [
+            bytearray(self._count),
+            bytearray(self._count),
+        ]  # Two alternating buffers
         self._active_index = 0
 
     def _read_states(self):
@@ -45,23 +49,21 @@ class PisoShiftRegister(Sensor):
         # Swap buffers (no copy, no new alloc)
         self._active_index = 1 - self._active_index
 
-
-
     async def update(self) -> None:
         self._read_states()
 
 
 class SipoShiftRegister(Fixture):
     def __init__(
-            self,
-            _context: tuple[ArtNet, SoftSPI, I2C],
-            _name: str,
-            latch: int,
-            count: int = 1,
-            *,
-            update_rate_hz: float = _DEFAULT_UPDATE_RATE_HZ,
-            universe: int | None = None,
-        ) -> None:
+        self,
+        _context: tuple[ArtNet, SoftSPI, I2C],
+        _name: str,
+        latch: int,
+        count: int = 1,
+        *,
+        update_rate_hz: float = _DEFAULT_UPDATE_RATE_HZ,
+        universe: int | None = None,
+    ) -> None:
         super().__init__(_context[0], _name, update_rate_hz, universe=universe)
         self._spi: SoftSPI = _context[1]
         self._latch_pin: Pin = Pin(latch, Pin.OUT)

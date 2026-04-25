@@ -26,7 +26,10 @@ class RFIDReader(Sensor):
     def scan_uid(self, uid: bytes | None, *, timestamp: float | None = None) -> None:
         if timestamp is None:
             timestamp = time.time()
-        if self._current_uid == uid and (self._forget_time is None or timestamp - self._last_update_time < self._forget_time):
+        if self._current_uid == uid and (
+            self._forget_time is None
+            or timestamp - self._last_update_time < self._forget_time
+        ):
             return
         self._last_update_time = timestamp
         previous_uid = self._current_uid

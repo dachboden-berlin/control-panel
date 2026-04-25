@@ -20,7 +20,9 @@ def toggle_cells(event):
     for button_id, pressed in event.value:
         if pressed:
             x, y = button_pos(button_id)
-            BOARD[x][y] = CellState.ALIVE if BOARD[x][y] is CellState.DEAD else CellState.DEAD
+            BOARD[x][y] = (
+                CellState.ALIVE if BOARD[x][y] is CellState.DEAD else CellState.DEAD
+            )
 
 
 def count_alive_neighbors(x: int, y: int) -> int:

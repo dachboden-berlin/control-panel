@@ -12,14 +12,17 @@ def console(event: api.Event[str]):
     command, *args = split
     if not command.startswith("/"):
         time_str = datetime.now().strftime("%H:%M")
-        terminal_gui.desktop.elements[0].elements[0].print_to_log(f"{time_str} {event.value}")
+        terminal_gui.desktop.elements[0].elements[0].print_to_log(
+            f"{time_str} {event.value}"
+        )
         return
     match command:
         case "/display":
             api.get_device("fourteensegment").text = " ".join(args)
         case _:
-            terminal_gui.desktop.elements[0].elements[0].print_to_log(f"Unknown command: {command}", (255, 255, 0))
-
+            terminal_gui.desktop.elements[0].elements[0].print_to_log(
+                f"Unknown command: {command}", (255, 255, 0)
+            )
 
 
 @api.call_with_frequency(4)

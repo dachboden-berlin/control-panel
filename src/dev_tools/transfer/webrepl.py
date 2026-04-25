@@ -10,7 +10,7 @@ WEBREPL_FRAME_BIN = 0x82
 WEBREPL_REQ_S = "<2sBBQLH64s"
 WEBREPL_PUT_FILE = 1
 WEBREPL_GET_FILE = 2
-WEBREPL_GET_VER  = 3
+WEBREPL_GET_VER = 3
 
 
 class WebSocket:
@@ -67,12 +67,14 @@ class WebSocket:
 def handshake(sock):
     """Minimal WebSocket handshake."""
     cl = sock.makefile("rwb", 0)
-    cl.write(b"GET / HTTP/1.1\r\n"
-             b"Host: esp8266\r\n"
-             b"Connection: Upgrade\r\n"
-             b"Upgrade: websocket\r\n"
-             b"Sec-WebSocket-Key: foo\r\n"
-             b"\r\n")
+    cl.write(
+        b"GET / HTTP/1.1\r\n"
+        b"Host: esp8266\r\n"
+        b"Connection: Upgrade\r\n"
+        b"Upgrade: websocket\r\n"
+        b"Sec-WebSocket-Key: foo\r\n"
+        b"\r\n"
+    )
     # read until blank line
     while True:
         line = cl.readline()
@@ -181,7 +183,9 @@ def run_webrepl_cmd(ws: WebSocket, command):
     return output.decode(errors="ignore")
 
 
-def webrepl_connect(host, password, port=WEBREPL_PORT, timeout: float = 30.0) -> WebSocket:
+def webrepl_connect(
+    host, password, port=WEBREPL_PORT, timeout: float = 30.0
+) -> WebSocket:
     """Open and return a persistent WebREPL connection (WebSocket)."""
     s = socket.socket()
     s.settimeout(timeout)

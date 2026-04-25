@@ -10,6 +10,7 @@ from .esp32 import ESP32
 class _States:
     """A proxy class for the states list.
     Automatically calls the update_callback function when a value in the list is changed."""
+
     def __init__(self, states: list[bool], update_callback: Callable[[], None]):
         self._states = states
         self._update_callback = update_callback
@@ -39,7 +40,6 @@ class _States:
 
     def __eq__(self, other):
         return self._states == other
-
 
 
 class PisoShiftRegister(Sensor):
@@ -73,7 +73,7 @@ class PisoShiftRegister(Sensor):
         if self._states[index] == value:
             return
         self._states[index] = value
-        self._fire_event("ButtonsChanged", ((index, value),) )
+        self._fire_event("ButtonsChanged", ((index, value),))
 
     def toggle_state(self, index: int):
         self.set_state(index, not self._states[index])
@@ -100,16 +100,20 @@ class PisoShiftRegister(Sensor):
 
 
 class SipoShiftRegister(Fixture):
-    def __init__(self,
-                 _artnet: ArtNet,
-                 _loop: asyncio.AbstractEventLoop,
-                 _esp: ESP32,
-                 name: str,
-                 count: int,
-                 *,
-                 universe: int | None = None):
+    def __init__(
+        self,
+        _artnet: ArtNet,
+        _loop: asyncio.AbstractEventLoop,
+        _esp: ESP32,
+        name: str,
+        count: int,
+        *,
+        universe: int | None = None,
+    ):
         super().__init__(_artnet, _loop, _esp, name, universe=universe)
-        self._states: _States = _States([False for _ in range(count * 8)], self.send_dmx)
+        self._states: _States = _States(
+            [False for _ in range(count * 8)], self.send_dmx
+        )
 
     def send_dmx(self):
         self._send_dmx_packet(bytearray(self._states))
@@ -136,7 +140,9 @@ class SipoShiftRegister(Fixture):
             raise TypeError("States must be assigned a list of booleans.")
         if len(new_states) != len(self):
             raise ValueError(f"State list must be exactly {len(self)} items long.")
-        self._states[:] = [bool(state) for state in new_states]  # Update the existing States proxy in-place so references don't break
+        self._states[:] = [
+            bool(state) for state in new_states
+        ]  # Update the existing States proxy in-place so references don't break
 
     def set_state(self, index: SupportsIndex, value: bool):
         self._states[index] = bool(value)

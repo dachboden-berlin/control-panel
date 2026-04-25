@@ -7,32 +7,68 @@ import argparse
 
 
 def parse_args() -> tuple[argparse.Namespace, list[str]]:
-    parser = argparse.ArgumentParser(description='Control Panel')
+    parser = argparse.ArgumentParser(description="Control Panel")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--no-gui', action='store_true',
-                       help='Disable the GUI (enabled by default)')
-    group.add_argument('-f', '--fullscreen', action='store_true',
-                       help='Run in fullscreen mode (windowed is default)')
-    parser.add_argument('--height', type=int, default=540,
-                        help='Height of the game window')
-    parser.add_argument('--width', type=int, default=960,
-                        help='Width of the game window')
-    parser.add_argument('--shaders', action='store_true',
-                        help='Enable shaders (shaders are disabled by default)')
-    group.add_argument('--stretch-to-fit', action='store_true',
-                       help='Stretch game to fit screen (black bars by default)')
-    parser.add_argument('--load-scripts', nargs='*', default=[],
-                        help='Load the specified script files (in ./userscripts). Restricted mode by default.')
-    parser.add_argument('--unrestricted', action='store_true',
-                        help='Load all scripts in unrestricted mode.')
-    parser.add_argument('--cheats', '-c', action='store_true', default=False,
-                        help='Enable cheat-protected console commands (disabled by default)')
-    parser.add_argument('--start-server', action='store_true',
-                        help='Start the script upload server (disabled by default)')
-    parser.add_argument('--port',  type=int, default=8000,
-                        help='Start the script upload server (disabled by default)')
-    parser.add_argument('--log-level', type=str, default='INFO',
-                        help='Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default: INFO')
+    group.add_argument(
+        "--no-gui", action="store_true", help="Disable the GUI (enabled by default)"
+    )
+    group.add_argument(
+        "-f",
+        "--fullscreen",
+        action="store_true",
+        help="Run in fullscreen mode (windowed is default)",
+    )
+    parser.add_argument(
+        "--height", type=int, default=540, help="Height of the game window"
+    )
+    parser.add_argument(
+        "--width", type=int, default=960, help="Width of the game window"
+    )
+    parser.add_argument(
+        "--shaders",
+        action="store_true",
+        help="Enable shaders (shaders are disabled by default)",
+    )
+    group.add_argument(
+        "--stretch-to-fit",
+        action="store_true",
+        help="Stretch game to fit screen (black bars by default)",
+    )
+    parser.add_argument(
+        "--load-scripts",
+        nargs="*",
+        default=[],
+        help="Load the specified script files (in ./userscripts). Restricted mode by default.",
+    )
+    parser.add_argument(
+        "--unrestricted",
+        action="store_true",
+        help="Load all scripts in unrestricted mode.",
+    )
+    parser.add_argument(
+        "--cheats",
+        "-c",
+        action="store_true",
+        default=False,
+        help="Enable cheat-protected console commands (disabled by default)",
+    )
+    parser.add_argument(
+        "--start-server",
+        action="store_true",
+        help="Start the script upload server (disabled by default)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Start the script upload server (disabled by default)",
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="INFO",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Default: INFO",
+    )
     return parser.parse_known_args()
 
 
@@ -48,31 +84,51 @@ def main():
     event_manager = api.EventManager(artnet)
     api.services.event_manager = event_manager
     # needs to be called after services.event_manager has been set
-    event_manager.instantiate_devices([api.dummy,])
+    event_manager.instantiate_devices(
+        [
+            api.dummy,
+        ]
+    )
 
-    game_manager = GameManager(resolution=(args.width, args.height) if not args.no_gui else None,
-                               dev_args=unknown_args,
-                               is_fullscreen=args.fullscreen,
-                               use_shaders=args.shaders,
-                               stretch_to_fit=args.stretch_to_fit,
-                               enable_cheats=args.cheats,
-                               )
+    game_manager = GameManager(
+        resolution=(args.width, args.height) if not args.no_gui else None,
+        dev_args=unknown_args,
+        is_fullscreen=args.fullscreen,
+        use_shaders=args.shaders,
+        stretch_to_fit=args.stretch_to_fit,
+        enable_cheats=args.cheats,
+    )
     api.services.game_manager = game_manager
 
     try:
-        api.services.dmx = DMXUniverse(None, devices=[device for device in event_manager.devices.values() if isinstance(device, DMXDevice)], target_frequency=10)
+        api.services.dmx = DMXUniverse(
+            None,
+            devices=[
+                device
+                for device in event_manager.devices.values()
+                if isinstance(device, DMXDevice)
+            ],
+            target_frequency=10,
+        )
     except ValueError as err:
-        print('Unable to initiate DMX Universe because of value error.')  # occurred on macOS
+        print(
+            "Unable to initiate DMX Universe because of value error."
+        )  # occurred on macOS
         print(err)
 
     if args.start_server:
         try:
             from controlpanel.server import app
             import uvicorn
-            server = uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=args.port, log_config=None))
+
+            server = uvicorn.Server(
+                uvicorn.Config(app, host="0.0.0.0", port=args.port, log_config=None)
+            )
             Thread(target=server.run, daemon=True).start()
         except ModuleNotFoundError:
-            print("Cannot start server because of missing optional [server] dependencies!")
+            print(
+                "Cannot start server because of missing optional [server] dependencies!"
+            )
 
     api.load_scripts(args.load_scripts, args.unrestricted)
 

@@ -10,17 +10,19 @@ _min_u10_duty = const(26 - 0)  # offset for correction
 _max_u10_duty = const(123 - 0)  # offset for correction
 _min_angle = const(0)
 _max_angle = const(180)
-_angle_conversion_factor = const((_max_u10_duty - _min_u10_duty) / (_max_angle - _min_angle))
+_angle_conversion_factor = const(
+    (_max_u10_duty - _min_u10_duty) / (_max_angle - _min_angle)
+)
 
 
 class Servo(Fixture):
     def __init__(
-            self,
-            _context: tuple[ArtNet, machine.SoftSPI, machine.I2C],
-            _name: str,
-            pin: int,
-            *,
-            universe: int | None = None,
+        self,
+        _context: tuple[ArtNet, machine.SoftSPI, machine.I2C],
+        _name: str,
+        pin: int,
+        *,
+        universe: int | None = None,
     ) -> None:
         super().__init__(_context[0], _name, update_rate_hz=0.0, universe=universe)
         self.current_angle = -0.001
@@ -41,7 +43,7 @@ class Servo(Fixture):
 
     def parse_dmx_data(self, data: bytes):
         assert len(data) == 4, f"Data is of unexpected length ({len(data)} bytes)"
-        angle = struct.unpack('f', data)[0]
+        angle = struct.unpack("f", data)[0]
         self.move(angle)
 
     def _angle_to_u10_duty(self, angle):

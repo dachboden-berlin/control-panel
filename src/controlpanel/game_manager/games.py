@@ -5,13 +5,15 @@ import random
 
 class BaseGame:
     """Base class to be used for all games as inheritance."""
-    def __init__(self,
-                 name: str,
-                 resolution: tuple[int, int],
-                 *,
-                 tickrate: float = 30.0,
-                 timescale: float = 1.0,
-                 ):
+
+    def __init__(
+        self,
+        name: str,
+        resolution: tuple[int, int],
+        *,
+        tickrate: float = 30.0,
+        timescale: float = 1.0,
+    ):
         self.name: str = name
         self.screen: pg.Surface = pg.Surface(resolution)
         self._base_tickrate: float = tickrate
@@ -36,7 +38,9 @@ class BaseGame:
         self._base_tickrate = tickrate
         self._tickrate = tickrate * self._timescale
 
-    @console_command("tickrate", is_cheat_protected=True, hint=lambda self: self.tickrate)
+    @console_command(
+        "tickrate", is_cheat_protected=True, hint=lambda self: self.tickrate
+    )
     def set_tickrate(self, tickrate: float):
         """Sets the tickrate (updates per second) of the game. Ideally has no impact on simulation speed."""
         self.tickrate = tickrate
@@ -50,7 +54,12 @@ class BaseGame:
         self._timescale = new_timescale
         self._tickrate = self._base_tickrate * new_timescale
 
-    @console_command("host_timescale", "timescale", is_cheat_protected=True, hint=lambda self: self.timescale)
+    @console_command(
+        "host_timescale",
+        "timescale",
+        is_cheat_protected=True,
+        hint=lambda self: self.timescale,
+    )
     def set_timescale(self, timescale: float):
         """Sets the tick speed (game simulation speed). Default is 1.0"""
         self.timescale = timescale
@@ -72,12 +81,20 @@ class BaseGame:
         """This method makes it possible for a game to be run without the controlpanel overhead.
         It is a self-contained game loop in its most vanilla and bare-bone form."""
         import argparse
+
         parser = argparse.ArgumentParser(description=self.name)
-        parser.add_argument('-w', '--windowed', action='store_true', help='Run in windowed mode (fullscreen is default)')
+        parser.add_argument(
+            "-w",
+            "--windowed",
+            action="store_true",
+            help="Run in windowed mode (fullscreen is default)",
+        )
         args = parser.parse_args()
 
         pg.init()
-        self.screen = pg.display.set_mode(self.screen.get_size(), pg.FULLSCREEN if not args.windowed else 0)
+        self.screen = pg.display.set_mode(
+            self.screen.get_size(), pg.FULLSCREEN if not args.windowed else 0
+        )
         clock = pg.time.Clock()
         while True:
             self.handle_events(pg.event.get())
@@ -90,7 +107,14 @@ class BaseGame:
 
 class FallbackGame(BaseGame):
     """Bouncing DVD Logo inspired text animation. No inputs, just used as a fallback."""
-    COLORS = [(255, 0, 0), (255, 255, 0), (0, 255, 0), (0, 0, 255), (0, 255, 255),]
+
+    COLORS = [
+        (255, 0, 0),
+        (255, 255, 0),
+        (0, 255, 0),
+        (0, 0, 255),
+        (0, 255, 255),
+    ]
 
     def __init__(self):
         super().__init__("Fallback Game", resolution=(960, 540))
@@ -98,23 +122,42 @@ class FallbackGame(BaseGame):
         self.text_velocity: pg.Vector2 = pg.Vector2(50, 50)
         self.text = "No GUI Script loaded. Use --no-gui to run headless."
         self.text_surf = self._get_error_surf()
-        self.text_pos: pg.Vector2 = (pg.Vector2(self.screen.get_rect().center) -
-                                     pg.Vector2(self.text_surf.get_rect().center))
+        self.text_pos: pg.Vector2 = pg.Vector2(
+            self.screen.get_rect().center
+        ) - pg.Vector2(self.text_surf.get_rect().center)
 
     def _get_error_surf(self) -> pg.Surface:
         return pg.font.Font(None, 36).render(
-            self.text,
-            True, self.COLORS[self.text_color_idx], None)
+            self.text, True, self.COLORS[self.text_color_idx], None
+        )
 
     def update(self) -> None:
         self.text_pos += self.text_velocity * self.dt
         bounce_count = 0
-        if self.text_pos.x + self.text_surf.get_width() > self.screen.get_width() or self.text_pos.x < 0:
-            self.text_pos.x = max(0, min(self.screen.get_width() - self.text_surf.get_width(), int(self.text_pos.x)))
+        if (
+            self.text_pos.x + self.text_surf.get_width() > self.screen.get_width()
+            or self.text_pos.x < 0
+        ):
+            self.text_pos.x = max(
+                0,
+                min(
+                    self.screen.get_width() - self.text_surf.get_width(),
+                    int(self.text_pos.x),
+                ),
+            )
             self.text_velocity.x *= -1
             bounce_count += 1
-        if self.text_pos.y + self.text_surf.get_height() > self.screen.get_height() or self.text_pos.y < 0:
-            self.text_pos.y = max(0, min(self.screen.get_height() - self.text_surf.get_height(), int(self.text_pos.y)))
+        if (
+            self.text_pos.y + self.text_surf.get_height() > self.screen.get_height()
+            or self.text_pos.y < 0
+        ):
+            self.text_pos.y = max(
+                0,
+                min(
+                    self.screen.get_height() - self.text_surf.get_height(),
+                    int(self.text_pos.y),
+                ),
+            )
             bounce_count += 1
             self.text_velocity.y *= -1
         if bounce_count == 1:

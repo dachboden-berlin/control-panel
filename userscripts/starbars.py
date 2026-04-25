@@ -34,12 +34,14 @@ current_score = 0  # 0 to 12
 
 # --- Helpers ---
 
+
 def set_starbar_color(starbar_name, color):
     dev = api.get_device(starbar_name)
     if not dev:
         return
     if hasattr(dev, "set_leds_to_color"):
         dev.set_leds_to_color(color)
+
 
 def update_progress_lights():
     """
@@ -50,38 +52,41 @@ def update_progress_lights():
         dev = api.get_device(name)
         if not dev:
             continue
-            
+
         # Access 'lights' list directly as per device definition
         if hasattr(dev, "lights"):
             # Create list of 12 ints
             new_lights = []
-            for i in range(12): # Assuming 12 LEDs
+            for i in range(12):  # Assuming 12 LEDs
                 if i < current_score:
                     new_lights.append(BRIGHTNESS)
                 else:
                     new_lights.append(0)
             dev.lights = new_lights
 
+
 def start_new_round():
     global target_color, last_activity_time, game_active
-    
+
     # Pick new random target color
     target_color = random.choice(COLOR_LIST)
-    
+
     # Reset Timer
     last_activity_time = time.time()
     game_active = True
-    
+
     # Update Top Bar Color
     set_starbar_color(STARBAR_TOP, target_color)
-    
+
     # Update Progress Lights (Score is persisted across rounds unless timeout/win)
     update_progress_lights()
-    
+
     # Reset User Bars Color (to current input)
     update_user_bars()
-    
-    print(f"[Starbars Riddle] New Round! Target: {target_color} | Score: {current_score}/{MAX_SCORE}")
+
+    print(
+        f"[Starbars Riddle] New Round! Target: {target_color} | Score: {current_score}/{MAX_SCORE}"
+    )
 
 
 def get_user_color():
@@ -90,20 +95,23 @@ def get_user_color():
     b = 255 if api.get_device("ButtonBlue").pressed else 0
     return (r, g, b)
 
+
 def update_user_bars():
     user_color = get_user_color()
     for name in STARBARS_USER:
         set_starbar_color(name, user_color)
 
+
 def check_win_condition():
     global game_active
-    
+
     if not game_active:
         return
 
     user_color = get_user_color()
     if user_color == target_color:
         handle_success()
+
 
 def set_starbar_strobe(starbar_name, strobe_val):
     dev = api.get_device(starbar_name)
@@ -112,40 +120,42 @@ def set_starbar_strobe(starbar_name, strobe_val):
     if hasattr(dev, "strobe"):
         dev.strobe = strobe_val
 
+
 def handle_success():
     global game_active, current_score, last_activity_time
-    
+
     print("[Starbars Riddle] Riddle Solved!")
-    
+
     # Increment Score
     current_score += 1
-    
+
     # Update lights immediately to show progress
     update_progress_lights()
-    
+
     if current_score >= MAX_SCORE:
         print("[Starbars Riddle] GAME CLEARED!")
-        
+
         # Enable Strobe for Victory
         for name in ALL_STARBARS:
-             set_starbar_strobe(name, 1.0) # Max strobe speed
-             
+            set_starbar_strobe(name, 1.0)  # Max strobe speed
+
         current_score = 0
         game_active = False
         last_activity_time = time.time()
         return
 
     # Start next round
-    game_active = False 
+    game_active = False
     start_new_round()
+
 
 def handle_timeout():
     global game_active, current_score
     print("[Starbars Riddle] Timeout! Resetting progress.")
-    
+
     # Disable Strobe just in case
     for name in ALL_STARBARS:
-         set_starbar_strobe(name, 0.0)
+        set_starbar_strobe(name, 0.0)
 
     current_score = 0
     update_progress_lights()
@@ -153,6 +163,7 @@ def handle_timeout():
 
 
 # --- Callbacks ---
+
 
 @api.callback(source="ButtonRed")
 @api.callback(source="ButtonGreen")
@@ -162,22 +173,24 @@ def on_input(event: api.Event):
         update_user_bars()
         check_win_condition()
 
+
 # --- Loop ---
+
 
 @api.call_with_frequency(1)
 def game_loop():
     global last_activity_time, game_active, current_score
-    
+
     now = time.time()
-    
+
     # Victory Delay Logic with Strobe Cleanup
-    if not game_active and current_score == 0: 
-        if now - last_activity_time > 3: # 3 second victory party
-             # Disable Strobe before starting new round
-             for name in ALL_STARBARS:
-                 set_starbar_strobe(name, 0.0)
-                 
-             start_new_round()
+    if not game_active and current_score == 0:
+        if now - last_activity_time > 3:  # 3 second victory party
+            # Disable Strobe before starting new round
+            for name in ALL_STARBARS:
+                set_starbar_strobe(name, 0.0)
+
+            start_new_round()
         return
 
     # Check Timeout

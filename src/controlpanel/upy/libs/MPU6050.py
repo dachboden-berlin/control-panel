@@ -9,7 +9,9 @@ from time import sleep_ms
 from micropython import const
 
 error_msg = "\nError \n"
-i2c_err_str = "ESP32 could not communicate with module at address 0x{:02X}, check wiring"
+i2c_err_str = (
+    "ESP32 could not communicate with module at address 0x{:02X}, check wiring"
+)
 
 # Global Variables
 _GRAVITIY_MS2 = const(9.80665)
@@ -53,32 +55,33 @@ _maxFails = const(3)
 # Address
 _MPU6050_ADDRESS = const(0x68)
 
+
 def signedIntFromBytes(x, endian="big"):
     y = int.from_bytes(x, endian)
     if y >= 0x8000:
         return -((65535 - y) + 1)
     else:
         return y
-    
+
 
 class MPU6050:
     def __init__(self, i2c: SoftI2C, addr=_MPU6050_ADDRESS):
         # Checks any error would happen with I2C communication protocol.
         self._failCount = 0
         self._terminatingFailCount = 0
-        
+
         # Initializing the I2C method for ESP32
         # Pin assignment:
         # SCL -> GPIO 22
         # SDA -> GPIO 21
         self.i2c = SoftI2C(scl=Pin(22), sda=Pin(21), freq=100000)
-        
+
         # Initializing the I2C method for ESP8266
         # Pin assignment:
         # SCL -> GPIO 5
         # SDA -> GPIO 4
         # self.i2c = I2C(scl=Pin(5), sda=Pin(4))
-        
+
         self.addr = addr
         try:
             # Wake up the MPU-6050 since it starts in sleep mode
@@ -115,7 +118,7 @@ class MPU6050:
     def read_temperature(self):
         try:
             rawData = self.i2c.readfrom_mem(self.addr, _TEMP_OUT0, 2)
-            raw_temp = (signedIntFromBytes(rawData, "big"))
+            raw_temp = signedIntFromBytes(rawData, "big")
         except:
             print(i2c_err_str.format(self.addr))
             return float("NaN")
@@ -131,10 +134,10 @@ class MPU6050:
     # Gets the range the accelerometer is set to.
     # raw=True: Returns raw value from the ACCEL_CONFIG register
     # raw=False: Return integer: -1, 2, 4, 8 or 16. When it returns -1 something went wrong.
-    def get_accel_range(self, raw = False):
+    def get_accel_range(self, raw=False):
         # Get the raw value
         raw_data = self.i2c.readfrom_mem(self.addr, _ACCEL_CONFIG, 2)
-        
+
         if raw is True:
             return raw_data[0]
         else:
@@ -151,7 +154,7 @@ class MPU6050:
 
     # Reads and returns the AcX, AcY and AcZ values from the accelerometer.
     # Returns dictionary data in g or m/s^2 (g=False)
-    def read_accel_data(self, g = False) -> tuple[int, int, int]:
+    def read_accel_data(self, g=False) -> tuple[int, int, int]:
         accel_data = self._read_data(_ACCEL_XOUT0)
         accel_range = self._accel_range
         if accel_range == _ACC_RNG_2G:
@@ -179,8 +182,8 @@ class MPU6050:
             return x, y, z
 
     def read_accel_abs(self, g=False):
-        d=self.read_accel_data(g)
-        return sqrt(d[0]**2 + d[1]**2 + d[2]**2)
+        d = self.read_accel_data(g)
+        return sqrt(d[0] ** 2 + d[1] ** 2 + d[2] ** 2)
 
     def set_gyro_range(self, gyro_range):
         self.i2c.writeto_mem(self.addr, _GYRO_CONFIG, bytes([gyro_range]))
@@ -189,7 +192,7 @@ class MPU6050:
     # Gets the range the gyroscope is set to.
     # raw=True: return raw value from GYRO_CONFIG register
     # raw=False: return range in deg/s
-    def get_gyro_range(self, raw = False):
+    def get_gyro_range(self, raw=False):
         # Get the raw value
         raw_data = self.i2c.readfrom_mem(self.addr, _GYRO_CONFIG, 2)
 
@@ -231,8 +234,10 @@ class MPU6050:
 
         return x, y, z
 
-    def read_angle(self) -> tuple[float, float]: # returns radians. orientation matches silkscreen
-        a=self.read_accel_data()
-        x=atan2(a[1],a[2])
-        y=atan2(-a[1],a[2])
+    def read_angle(
+        self,
+    ) -> tuple[float, float]:  # returns radians. orientation matches silkscreen
+        a = self.read_accel_data()
+        x = atan2(a[1], a[2])
+        y = atan2(-a[1], a[2])
         return x, y

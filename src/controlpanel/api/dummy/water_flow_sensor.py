@@ -10,12 +10,12 @@ class WaterFlowSensor(Sensor):
     }
 
     def __init__(
-            self,
-            _artnet: ArtNet,
-            _name: str,
-            /,
-            polling_rate_hz: float,
-        ) -> None:
+        self,
+        _artnet: ArtNet,
+        _name: str,
+        /,
+        polling_rate_hz: float,
+    ) -> None:
         super().__init__(_artnet, _name)
         self._polling_rate_hz = polling_rate_hz
         self._lifetime_water_flow: int = 0
@@ -37,5 +37,7 @@ class WaterFlowSensor(Sensor):
         water_flow: int = struct.unpack("<I", data)[0]
         self._lifetime_water_flow += water_flow
         self._fire_event("WaterFlow", water_flow)
-        self._fire_event("WaterFlowPerSecond", water_flow / (timestamp - self._last_flow_time))
+        self._fire_event(
+            "WaterFlowPerSecond", water_flow / (timestamp - self._last_flow_time)
+        )
         self._last_flow_time = timestamp

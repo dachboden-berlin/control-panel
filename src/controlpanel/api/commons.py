@@ -36,11 +36,12 @@ class Condition:
     value: EventValueType
 
 
-CallbackType = (Callable[[Event], Coroutine[Any, Any, None]] |
-                Callable[[Event], None] |
-                Callable[[], Coroutine[Any, Any, None]] |
-                Callable[[], None]
-                )
+CallbackType = (
+    Callable[[Event], Coroutine[Any, Any, None]]
+    | Callable[[Event], None]
+    | Callable[[], Coroutine[Any, Any, None]]
+    | Callable[[], None]
+)
 
 
 @dataclass
@@ -66,4 +67,6 @@ class I2CConfig(TypedDict, total=True):
 class NodeConfig(TypedDict):
     SPI: SPIConfig
     I2C: I2CConfig
-    devices: dict[str, tuple[str, dict[str, float | int | str], dict[str, float | int | str]]]
+    devices: dict[
+        str, tuple[str, dict[str, float | int | str], dict[str, float | int | str]]
+    ]

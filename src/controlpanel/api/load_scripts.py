@@ -16,6 +16,7 @@ except FileNotFoundError:
 
 class UserScriptsFinder(importlib.abc.MetaPathFinder):
     """This MetaPathFinder finds userscripts, and imports them as userscript.fullname"""
+
     def find_spec(self, fullname, path, target=None):
         # Only handle top-level names in userscripts
         if "." not in fullname:
@@ -27,6 +28,7 @@ class UserScriptsFinder(importlib.abc.MetaPathFinder):
                 return spec
         return None
 
+
 # Prepend our finder to meta path
 sys.meta_path.insert(0, UserScriptsFinder())
 
@@ -36,7 +38,6 @@ def load_script_restricted(name) -> types.ModuleType | None:
     from RestrictedPython import compile_restricted
     import warnings
     from .load_scripts_helper import make_globals
-
 
     script_path = (SCRIPT_DIR / name).with_suffix(".py")
     if not script_path.is_file():
@@ -52,7 +53,7 @@ def load_script_restricted(name) -> types.ModuleType | None:
             warnings.filterwarnings(
                 "ignore",
                 message=r".*Prints, but never reads 'printed' variable.*",
-                category=SyntaxWarning
+                category=SyntaxWarning,
             )
             bytecode = compile_restricted(source_code, filename=name, mode="exec")
     except SyntaxError as e:
@@ -83,7 +84,13 @@ def load_script_unrestricted(name) -> types.ModuleType | None:
     try:
         real_print = print  # Save the real print
 
-        def print_override(*args: str, sep: str | None = " ", end: str | None = "\n", file=None, flush=False) -> None:
+        def print_override(
+            *args: str,
+            sep: str | None = " ",
+            end: str | None = "\n",
+            file=None,
+            flush=False,
+        ) -> None:
             """Custom print function that inserts the name of the script before the given args"""
             # TODO: Joining the strings is a hacky workaround until the dev console can properly display multi-arg print
             real_print(f"{name}: {sep.join(args)}", end=end, file=file, flush=flush)
@@ -98,7 +105,9 @@ def load_script_unrestricted(name) -> types.ModuleType | None:
             # Restore original print
             builtins.print = real_print
 
-        module.__dict__['print'] = print_override  # Ensure that all future uses of print will use our custom print function
+        module.__dict__["print"] = (
+            print_override  # Ensure that all future uses of print will use our custom print function
+        )
 
         print(f"Loaded {name} (unrestricted)")
         return module
@@ -107,7 +116,9 @@ def load_script_unrestricted(name) -> types.ModuleType | None:
         return None
 
 
-def load_script(script: str, unrestricted: bool | None = None) -> types.ModuleType | None:
+def load_script(
+    script: str, unrestricted: bool | None = None
+) -> types.ModuleType | None:
     """Load the given script. If unrestricted is set to either True or False, import in unrestricted or restricted mode.
     If unrestricted is left to None, import unrestricted if whitelisted, otherwise import restricted.
     Return the module if import was successful, otherwise return None."""
@@ -127,8 +138,12 @@ def load_scripts(scripts: list[str], override_unrestricted: bool = False) -> Non
     try:
         import RestrictedPython
     except ModuleNotFoundError:
-        print("Importing all scripts in unrestricted mode as RestrictedPython is not installed. (optional dependency)")
-        override_unrestricted = True  # force unrestricted if RestrictedPython is missing
+        print(
+            "Importing all scripts in unrestricted mode as RestrictedPython is not installed. (optional dependency)"
+        )
+        override_unrestricted = (
+            True  # force unrestricted if RestrictedPython is missing
+        )
 
     for script in scripts:
         load_script(script, unrestricted=override_unrestricted or script in WHITELIST)
