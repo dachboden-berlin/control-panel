@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 import importlib.util
-from types import ModuleType, GenericAlias
+from types import ModuleType
 from . import DEVICE_MANIFEST_PATH
 import inspect
 from typing import Dict, Set, Tuple, FrozenSet, get_origin, get_args, Literal

@@ -168,7 +168,7 @@ def establish_wifi_connection(timeout_ms: int = 20_000) -> network.WLAN | None:
 def establish_lan_connection(timeout_seconds: float = 5.0) -> network.LAN | None:
     import time
 
-    print(f"Attempting to establish a LAN connection...")
+    print("Attempting to establish a LAN connection...")
     try:
         lan = network.LAN(
             mdc=machine.Pin(23),

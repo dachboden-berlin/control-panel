@@ -7,7 +7,6 @@ from controlpanel.upy.phys import Fixture, Sensor
 from controlpanel.shared.compatibility import Callable
 import time
 import uasyncio as asyncio
-import network
 import webrepl
 
 

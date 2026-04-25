@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Optional
 from controlpanel.dmx import DMXUniverse
-import types
 from artnet import ArtNet
 from .event_manager import EventManager
 

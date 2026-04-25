@@ -38,7 +38,7 @@ from controlpanel.api.dummy import *
 
 '''
 
-    footer = f"""
+    footer = """
 def get_device(device_name: str) -> Device: ...
 """
 

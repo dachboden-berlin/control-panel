@@ -84,7 +84,7 @@ def build_structure_from_files(files: list[Path], base_path: Path) -> NestedList
 
 
 def create_structure(ws: webrepl.WebSocket, structure: NestedList) -> None:
-    webrepl.run_webrepl_cmd(ws, f"import os")
+    webrepl.run_webrepl_cmd(ws, "import os")
     for folder_name, subfolders in structure:
         webrepl.run_webrepl_cmd(ws, f'os.mkdir("{folder_name}")')
         webrepl.run_webrepl_cmd(ws, f'os.chdir("{folder_name}")')

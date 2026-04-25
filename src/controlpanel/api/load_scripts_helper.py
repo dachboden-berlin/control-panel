@@ -1,7 +1,7 @@
 import sys
 import RestrictedPython.Eval
 from RestrictedPython import safe_builtins, utility_builtins, limited_builtins
-from typing import Any, Callable
+from typing import Any
 import types
 import controlpanel.api as api
 

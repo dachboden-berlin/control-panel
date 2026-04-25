@@ -243,7 +243,7 @@ class EventManager:
 
         universe = start_universe
         for node_name, node_config in manifest.items():
-            if not node_name in (node.name for node in self._nodes):
+            if node_name not in (node.name for node in self._nodes):
                 self._nodes.append(ESP32(node_name))
             esp = next((esp for esp in self._nodes if esp.name == node_name), None)
             for device_name, (class_name, phys_kwargs, dummy_kwargs) in node_config[

@@ -1,6 +1,5 @@
 import math
 from controlpanel import api
-from controlpanel.dmx.devices import HydroBeamX12
 from controlpanel.api.logger import get_logger
 import pygame
 

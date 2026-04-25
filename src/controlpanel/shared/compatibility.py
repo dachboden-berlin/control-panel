@@ -34,7 +34,7 @@ except ImportError:
 try:
     from artnet import ArtNet
 except ImportError:
-    from controlpanel.upy.artnet import ArtNet
+    pass
 
 
 try:

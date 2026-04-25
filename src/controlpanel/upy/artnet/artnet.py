@@ -133,7 +133,7 @@ class ArtNet:
         address: tuple[str, int] | None = None,
         short_name: str = "Unnamed Node",
         long_name: str = "This is an unnamed node",
-        node_report: str = f"#0001 [0000] Missing node report",
+        node_report: str = "#0001 [0000] Missing node report",
         mac: str | bytes = b"\x02\x00\x00\x00\x00\x01",
     ) -> None:
         """Send an ArtPollReply packet."""
